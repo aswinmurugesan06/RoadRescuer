@@ -179,6 +179,11 @@ model ServiceRequest {
   finalAmount        Float?
   cancellationReason String?
 
+  pricingConfigId           String?
+  pricingConfig             PricingConfig?   @relation(fields: [pricingConfigId], references: [id], onDelete: SetNull)
+  estimateBreakdown         Json?
+  revisedEstimateBreakdown  Json?
+
   acceptedAt         DateTime?
   completedAt        DateTime?
   createdAt          DateTime         @default(now())
@@ -316,5 +321,29 @@ model DeviceToken {
 
   @@index([userId])
   @@map("device_tokens")
+}
+
+model PricingConfig {
+  id                 String           @id @default(uuid())
+  category           ProviderCategory
+  problemCategory    String?
+  vehicleType        String?
+
+  baseLaborCharge    Decimal          @db.Decimal(10, 2)
+  perKmCharge        Decimal          @default(0.00) @db.Decimal(10, 2)
+  includedDistanceKm Decimal          @default(0.00) @db.Decimal(10, 2)
+  additionalCharges  Decimal          @default(0.00) @db.Decimal(10, 2)
+  taxRate            Decimal          @default(0.18) @db.Decimal(5, 4)
+
+  description        String?
+  isActive           Boolean          @default(true)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  serviceRequests    ServiceRequest[]
+
+  @@index([category, vehicleType, isActive])
+  @@index([category, problemCategory, vehicleType, isActive])
+  @@map("pricing_configs")
 }
 

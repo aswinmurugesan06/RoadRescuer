@@ -115,6 +115,28 @@ class ServiceRequestService {
       if (!vehicleType) vehicleType = vehicle.type;
     }
 
+    let estimatedAmount = data.estimatedAmount ? parseFloat(data.estimatedAmount) : null;
+    let pricingConfigId = data.pricingConfigId || null;
+    let estimateBreakdown = data.estimateBreakdown || null;
+
+    if (!estimatedAmount && !estimateBreakdown) {
+      try {
+        const pricingService = require('./pricingService');
+        const autoEstimate = await pricingService.calculateEstimate({
+          category,
+          problemCategory: data.problemDescription,
+          vehicleType,
+          customerLat: data.customerLatitude,
+          customerLng: data.customerLongitude,
+        });
+        estimatedAmount = autoEstimate.estimatedTotal;
+        pricingConfigId = autoEstimate.pricingConfigId;
+        estimateBreakdown = autoEstimate;
+      } catch (_) {
+        // If no pricing rule configured, retain null without disrupting creation
+      }
+    }
+
     const requestData = {
       customerId,
       category,
@@ -128,7 +150,9 @@ class ServiceRequestService {
       vehiclePlate,
       vehicleModel,
       vehicleType,
-      estimatedAmount: data.estimatedAmount ? parseFloat(data.estimatedAmount) : null,
+      estimatedAmount,
+      pricingConfigId,
+      estimateBreakdown,
     };
 
     if (prisma) {

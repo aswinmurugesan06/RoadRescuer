@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const adminController = require('../controllers/adminController');
+const pricingController = require('../controllers/pricingController');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 
 // Apply ADMIN authentication and authorization guards to ALL admin routes
@@ -29,5 +30,11 @@ router.get('/payments', adminController.listPayments);
 // ── Ratings & Reviews Moderation ───────────────────────────────────────
 router.get('/ratings', adminController.listRatings);
 router.delete('/ratings/:ratingId', adminController.deleteRating);
+
+// ── Pricing Configuration ──────────────────────────────────────────────
+router.get('/pricing-configs', pricingController.listPricingConfigs);
+router.get('/pricing-configs/:id', pricingController.getPricingConfigById);
+router.post('/pricing-configs', pricingController.createPricingConfig);
+router.put('/pricing-configs/:id', pricingController.updatePricingConfig);
 
 module.exports = router;

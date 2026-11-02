@@ -12,6 +12,7 @@ const ratingRoutes = require('./routes/ratings');
 const adminRoutes = require('./routes/admin');
 const notificationRoutes = require('./routes/notifications');
 const routingRoutes = require('./routes/routing');
+const pricingRoutes = require('./routes/pricing');
 
 const app = express();
 
@@ -31,6 +32,7 @@ app.use('/api/ratings', ratingRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/routing', routingRoutes);
+app.use('/api/pricing', pricingRoutes);
 
 // 404 handler
 app.use((req, res) => {
