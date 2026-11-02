@@ -3,12 +3,16 @@ import '../../../routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/vehicle_model.dart';
 import '../../../models/service_request_model.dart';
+import '../../../models/pricing_estimate_model.dart';
 import '../../../services/location_service.dart';
 import '../../../services/service_request_service.dart';
+import '../../../services/pricing_service.dart';
+import '../../../services/api_client.dart';
 import '../../../widgets/rr_button.dart';
 import '../../../widgets/rr_card.dart';
 import '../../../widgets/rr_map_view.dart';
 import '../../../widgets/rr_text_field.dart';
+import '../../../widgets/rr_pricing_breakdown_card.dart';
 
 class LocationConfirmationScreen extends StatefulWidget {
   final String serviceType;
@@ -39,16 +43,65 @@ class _LocationConfirmationScreenState
   String? _errorType; // 'disabled' | 'denied' | 'deniedForever' | 'generic'
   String _currentAddress = 'Detecting current GPS coordinates...';
 
+  // Dynamic pricing estimate state
+  PricingEstimateModel? _estimate;
+  bool _isLoadingEstimate = false;
+  String? _estimateError;
+  int _estimateRequestSeq = 0;
+
   @override
   void initState() {
     super.initState();
     _fetchDeviceLocation();
+    _fetchPricingEstimate();
   }
 
   @override
   void dispose() {
+    _estimateRequestSeq++; // Invalidate any in-flight requests on disposal
     _landmarkController.dispose();
     super.dispose();
+  }
+
+  Future<void> _fetchPricingEstimate() async {
+    if (!mounted) return;
+    final int currentSeq = ++_estimateRequestSeq;
+
+    setState(() {
+      _isLoadingEstimate = true;
+      _estimateError = null;
+    });
+
+    try {
+      final est = await PricingService.getEstimate(
+        serviceType: widget.serviceType,
+        problem: widget.problem,
+        vehicleType: widget.vehicle?.type,
+        customerLatitude: _deviceLocation?.latitude,
+        customerLongitude: _deviceLocation?.longitude,
+      );
+
+      // Discard response if widget unmounted or a newer request was dispatched
+      if (!mounted || currentSeq != _estimateRequestSeq) return;
+
+      setState(() {
+        _estimate = est;
+        _isLoadingEstimate = false;
+        _estimateError = null;
+      });
+    } on ApiException catch (e) {
+      if (!mounted || currentSeq != _estimateRequestSeq) return;
+      setState(() {
+        _isLoadingEstimate = false;
+        _estimateError = e.message;
+      });
+    } catch (e) {
+      if (!mounted || currentSeq != _estimateRequestSeq) return;
+      setState(() {
+        _isLoadingEstimate = false;
+        _estimateError = 'Unable to calculate estimate at this time.';
+      });
+    }
   }
 
   Future<void> _fetchDeviceLocation() async {
@@ -68,6 +121,9 @@ class _LocationConfirmationScreenState
         _currentAddress =
             'Lat: ${loc.latitude.toStringAsFixed(6)}, Lng: ${loc.longitude.toStringAsFixed(6)} (Accuracy: ${loc.accuracyLabel})';
       });
+      // Refresh pricing estimate once precise GPS coordinates are locked
+      _fetchPricingEstimate();
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -147,6 +203,9 @@ class _LocationConfirmationScreenState
             : null,
         vehicleType: widget.vehicle?.type,
         category: widget.serviceType,
+        estimatedAmount: _estimate?.estimatedTotal,
+        pricingConfigId: _estimate?.pricingConfigId,
+        estimateBreakdown: _estimate?.toJson(),
       );
 
       if (!mounted) return;
@@ -435,6 +494,17 @@ class _LocationConfirmationScreenState
                                 'e.g. Near Toll Gate, KM 82 marker, Northbound lane',
                             controller: _landmarkController,
                             prefixIcon: Icons.signpost_outlined,
+                          ),
+                          const SizedBox(height: 24),
+
+                          // Dynamic Cost Estimation Breakdown
+                          const SectionHeader(title: 'Estimated Pricing'),
+                          const SizedBox(height: 12),
+                          RRPricingBreakdownCard(
+                            estimate: _estimate,
+                            isLoading: _isLoadingEstimate,
+                            errorMessage: _estimateError,
+                            onRetry: _fetchPricingEstimate,
                           ),
                           const SizedBox(height: 24),
 

@@ -177,19 +177,19 @@ async function runTests() {
     assert(ruleTier3Id !== undefined, 'Returns created pricing rule ID');
     assert(resTier3.data?.data?.baseLaborCharge === 400, 'Numeric decimal serialization verified (400.00)');
 
-    // Create Tier 2: Category + Vehicle Type (Heavy Vehicle)
+    // Create Tier 2: Category + Vehicle Type (Test Vehicle)
     const resTier2 = await request('/api/admin/pricing-configs', {
       method: 'POST',
       headers: { Authorization: `Bearer ${adminToken}` },
       body: {
         category: 'MECHANIC',
-        vehicleType: 'Heavy Vehicle',
+        vehicleType: 'Test Vehicle',
         baseLaborCharge: 800.0,
         perKmCharge: 35.0,
         includedDistanceKm: 5.0,
         additionalCharges: 100.0,
         taxRate: 0.18,
-        description: '[DEMO TEST] Mechanic Heavy Vehicle Rule',
+        description: '[DEMO TEST] Mechanic Test Vehicle Rule',
       },
     });
     assert(resTier2.status === 201, 'Admin creates Category + Vehicle rule (201)');
@@ -202,13 +202,13 @@ async function runTests() {
       body: {
         category: 'MECHANIC',
         problemCategory: 'Engine Seized',
-        vehicleType: 'Heavy Vehicle',
+        vehicleType: 'Test Vehicle',
         baseLaborCharge: 1500.0,
         perKmCharge: 40.0,
         includedDistanceKm: 0.0,
         additionalCharges: 200.0,
         taxRate: 0.18,
-        description: '[DEMO TEST] Mechanic Engine Seized Heavy Vehicle Rule',
+        description: '[DEMO TEST] Mechanic Engine Seized Test Vehicle Rule',
       },
     });
     assert(resTier1.status === 201, 'Admin creates Exact Problem + Vehicle rule (201)');
@@ -221,7 +221,7 @@ async function runTests() {
       body: {
         category: 'MECHANIC',
         problemCategory: 'Engine Seized',
-        vehicleType: 'Heavy Vehicle',
+        vehicleType: 'Test Vehicle',
         baseLaborCharge: 1600.0,
         description: '[DEMO TEST] Duplicate Attempt',
       },
@@ -236,7 +236,7 @@ async function runTests() {
       body: {
         category: 'MECHANIC',
         problemCategory: 'Engine Seized',
-        vehicleType: 'Heavy Vehicle',
+        vehicleType: 'Test Vehicle',
       },
     });
     assert(estTier1.status === 200, 'Customer receives estimate for Tier 1 match (200)');
@@ -246,14 +246,14 @@ async function runTests() {
     );
     assert(estTier1.data?.data?.baseLaborCharge === 1500, 'Matched Tier 1 base labor charge (1500)');
 
-    // B: Heavy Vehicle with general problem -> Tier 2
+    // B: Test Vehicle with general problem -> Tier 2
     const estTier2 = await request('/api/pricing/estimate', {
       method: 'POST',
       headers: { Authorization: `Bearer ${customerToken}` },
       body: {
         category: 'MECHANIC',
         problemCategory: 'Brake Noise',
-        vehicleType: 'Heavy Vehicle',
+        vehicleType: 'Test Vehicle',
       },
     });
     assert(estTier2.status === 200, 'Customer receives estimate for Tier 2 match (200)');
@@ -363,7 +363,7 @@ async function runTests() {
     // Clean up demo rules
     if (prisma) {
       await prisma.pricingConfig.deleteMany({
-        where: { id: { in: [ruleTier1Id, ruleTier2Id, ruleTier3Id] } },
+        where: { id: { in: [ruleTier1Id, ruleTier2Id, ruleTier3Id].filter(Boolean) } },
       });
       await prisma.user.deleteMany({
         where: { email: { in: [adminEmail, custEmail] } },

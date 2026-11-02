@@ -63,6 +63,8 @@ class ServiceRequestModel {
   final String? category;
   final String? customerAddress;
   final String? cancellationReason;
+  final double? estimatedAmount;
+  final Map<String, dynamic>? estimateBreakdown;
 
   const ServiceRequestModel({
     required this.id,
@@ -87,6 +89,8 @@ class ServiceRequestModel {
     this.category,
     this.customerAddress,
     this.cancellationReason,
+    this.estimatedAmount,
+    this.estimateBreakdown,
   });
 
   factory ServiceRequestModel.fromJson(Map<String, dynamic> json) {
@@ -191,6 +195,8 @@ class ServiceRequestModel {
       category: json['category'] as String?,
       customerAddress: addr,
       cancellationReason: json['cancellationReason'] as String?,
+      estimatedAmount: (json['estimatedAmount'] as num?)?.toDouble(),
+      estimateBreakdown: json['estimateBreakdown'] as Map<String, dynamic>?,
     );
   }
 
@@ -217,6 +223,8 @@ class ServiceRequestModel {
     String? category,
     String? customerAddress,
     String? cancellationReason,
+    double? estimatedAmount,
+    Map<String, dynamic>? estimateBreakdown,
   }) {
     return ServiceRequestModel(
       id: id ?? this.id,
@@ -241,6 +249,8 @@ class ServiceRequestModel {
       category: category ?? this.category,
       customerAddress: customerAddress ?? this.customerAddress,
       cancellationReason: cancellationReason ?? this.cancellationReason,
+      estimatedAmount: estimatedAmount ?? this.estimatedAmount,
+      estimateBreakdown: estimateBreakdown ?? this.estimateBreakdown,
     );
   }
 

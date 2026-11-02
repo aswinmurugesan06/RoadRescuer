@@ -18,6 +18,8 @@ class ServiceRequestService {
     String? vehicleType,
     String? category,
     double? estimatedAmount,
+    String? pricingConfigId,
+    Map<String, dynamic>? estimateBreakdown,
   }) async {
     final body = <String, dynamic>{
       'serviceType': serviceType,
@@ -46,6 +48,12 @@ class ServiceRequestService {
     }
     if (estimatedAmount != null) {
       body['estimatedAmount'] = estimatedAmount;
+    }
+    if (pricingConfigId != null && pricingConfigId.isNotEmpty) {
+      body['pricingConfigId'] = pricingConfigId;
+    }
+    if (estimateBreakdown != null) {
+      body['estimateBreakdown'] = estimateBreakdown;
     }
 
     final response = await ApiClient.post(_path, body);
