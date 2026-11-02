@@ -91,6 +91,19 @@ function validateLogin(req, res, next) {
   }
 
   req.body.loginIdentifier = loginId.trim();
+
+  if (req.body.expectedRole) {
+    const validRoles = ['CUSTOMER', 'PROVIDER', 'ADMIN'];
+    const expected = String(req.body.expectedRole).trim().toUpperCase();
+    if (!validRoles.includes(expected)) {
+      return res.status(400).json({
+        status: 'error',
+        message: `expectedRole must be one of: ${validRoles.join(', ')}`,
+      });
+    }
+    req.body.expectedRole = expected;
+  }
+
   next();
 }
 

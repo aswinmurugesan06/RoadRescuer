@@ -467,40 +467,47 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(
-                      Icons.receipt_long_rounded,
-                      color: AppColors.primary,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Invoice Ready',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      Text(
-                        '#INV-${bill.requestId.length >= 8 ? bill.requestId.substring(0, 8).toUpperCase() : bill.requestId.toUpperCase()}',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
-                          fontWeight: FontWeight.w600,
-                        ),
+                      child: const Icon(
+                        Icons.receipt_long_rounded,
+                        color: AppColors.primary,
+                        size: 24,
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Invoice Ready',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            '#INV-${bill.requestId.length >= 8 ? bill.requestId.substring(0, 8).toUpperCase() : bill.requestId.toUpperCase()}',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
@@ -728,16 +735,17 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
       ),
       child: Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isVeryNarrow = constraints.maxWidth < 340;
+              final badge = Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: (hasPendingInvoice ? AppColors.warning : AppColors.primary).withOpacity(0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
                       hasPendingInvoice ? Icons.receipt_long_rounded : Icons.fiber_manual_record,
@@ -756,8 +764,9 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
                     ),
                   ],
                 ),
-              ),
-              Text(
+              );
+
+              final statusText = Text(
                 hasPendingInvoice
                     ? 'Payment Due'
                     : (stepIndex >= 2 ? 'On Site' : 'En Route'),
@@ -766,8 +775,28 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
                 ),
-              ),
-            ],
+              );
+
+              if (isVeryNarrow) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    badge,
+                    const SizedBox(height: 8),
+                    statusText,
+                  ],
+                );
+              }
+
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Flexible(child: badge),
+                  const SizedBox(width: 8),
+                  statusText,
+                ],
+              );
+            },
           ),
           const SizedBox(height: 16),
           Text(
@@ -814,40 +843,64 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
       ),
       child: Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isVeryNarrow = constraints.maxWidth < 340;
+              final badge = Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: AppColors.warning.withOpacity(0.25),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: const [
                     Icon(Icons.radar_rounded, color: AppColors.warning, size: 14),
                     SizedBox(width: 6),
                     Text(
                       'LOOKING FOR PROVIDER',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: AppColors.warning,
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
-                        letterSpacing: 1,
+                        letterSpacing: 0.8,
                       ),
                     ),
                   ],
                 ),
-              ),
-              const Text(
+              );
+
+              const etaText = Text(
                 'Estimated 2–5 min',
                 style: TextStyle(
                   color: Colors.white70,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
-              ),
-            ],
+              );
+
+              if (isVeryNarrow) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    badge,
+                    const SizedBox(height: 8),
+                    etaText,
+                  ],
+                );
+              }
+
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Flexible(child: badge),
+                  const SizedBox(width: 8),
+                  etaText,
+                ],
+              );
+            },
           ),
           const SizedBox(height: 16),
           const Text(
@@ -861,13 +914,49 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
           ),
           const SizedBox(height: 6),
           Text(
-            'Contacting verified ${_request?.serviceType ?? "roadside"} providers near your GPS breakdown spot.',
+            'Contacting verified ${_getSearchingProviderWording()} near your GPS breakdown spot.',
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 13, color: Color(0xFFCBD5E1)),
           ),
         ],
       ),
     );
+  }
+
+  String _getSearchingProviderWording() {
+    final cat = (_request?.category ?? '').toUpperCase();
+    final type = (_request?.serviceType ?? '').toLowerCase();
+
+    if (cat == 'PUNCTURE' || type.contains('puncture') || type.contains('tyre')) {
+      return 'puncture providers';
+    } else if (cat == 'TOW_TRUCK' || type.contains('tow')) {
+      return 'towing providers';
+    } else if (cat == 'BATTERY' || type.contains('battery')) {
+      return 'battery specialists';
+    } else if (cat == 'FUEL' || type.contains('fuel')) {
+      return 'fuel delivery providers';
+    } else if (cat == 'MECHANIC' || type.contains('mechanic')) {
+      return 'mechanics';
+    }
+    return 'roadside assistance providers';
+  }
+
+  String _getMatchingHeadline() {
+    final cat = (_request?.category ?? '').toUpperCase();
+    final type = (_request?.serviceType ?? '').toLowerCase();
+
+    if (cat == 'PUNCTURE' || type.contains('puncture') || type.contains('tyre')) {
+      return 'Looking for matching puncture specialists...';
+    } else if (cat == 'TOW_TRUCK' || type.contains('tow')) {
+      return 'Looking for matching towing services...';
+    } else if (cat == 'BATTERY' || type.contains('battery')) {
+      return 'Looking for matching battery specialists...';
+    } else if (cat == 'FUEL' || type.contains('fuel')) {
+      return 'Looking for matching fuel providers...';
+    } else if (cat == 'MECHANIC' || type.contains('mechanic')) {
+      return 'Looking for matching mechanics...';
+    }
+    return 'Looking for matching service providers...';
   }
 
   // ── Cancelled Banner ───────────────────────────────────────────────
@@ -952,12 +1041,13 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
                 child: CircularProgressIndicator(strokeWidth: 2.5),
               ),
               const SizedBox(width: 14),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Looking for matching mechanics...',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                  _getMatchingHeadline(),
+                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
                 ),
               ),
+              const SizedBox(width: 8),
               RRStatusBadge(
                 label: req?.category ?? 'PENDING',
                 color: AppColors.warning,
@@ -967,7 +1057,7 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
           const SizedBox(height: 16),
           const Divider(),
           const SizedBox(height: 12),
-          InfoRow(label: 'Service', value: req?.serviceType ?? 'Mechanic'),
+          InfoRow(label: 'Service', value: req?.serviceType ?? 'Roadside Assistance'),
           const Divider(),
           InfoRow(label: 'Issue', value: req?.problem ?? 'Breakdown'),
           const Divider(),
@@ -998,7 +1088,7 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
             value: _request?.cancellationReason ?? 'Cancelled by customer',
           ),
           const Divider(),
-          InfoRow(label: 'Service', value: _request?.serviceType ?? 'Mechanic'),
+          InfoRow(label: 'Service', value: _request?.serviceType ?? 'Roadside Assistance'),
           const Divider(),
           InfoRow(
             label: 'Vehicle',

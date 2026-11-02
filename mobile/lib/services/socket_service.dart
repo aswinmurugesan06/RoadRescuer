@@ -4,7 +4,7 @@ import 'auth_service.dart';
 
 /// Base URL of the RoadRescue backend WebSocket endpoint.
 /// Same host as ApiClient — on Android emulator use 10.0.2.2.
-const String _kSocketUrl = 'http://10.89.213.64:3000';
+const String _kSocketUrl = 'http://10.49.85.64:3000';
 
 /// Typed callback for provider GPS location updates.
 typedef ProviderLocationCallback = void Function(

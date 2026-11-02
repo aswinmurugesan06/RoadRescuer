@@ -5,7 +5,7 @@ import 'auth_service.dart';
 
 /// Base URL of the RoadRescue backend.
 /// On Android emulator use 10.0.2.2; on a real device use your machine's LAN IP.
-const String _kBaseUrl = 'http://10.89.213.64:3000/api';
+const String _kBaseUrl = 'http://10.49.85.64:3000/api';
 
 /// Thrown when the server returns a non-2xx response.
 class ApiException implements Exception {

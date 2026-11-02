@@ -134,31 +134,54 @@ class ServiceRequestModel {
 
     final providerData = json['provider'] as Map<String, dynamic>?;
     final customerData = json['customer'] as Map<String, dynamic>?;
+    final vehicleData = json['vehicle'] as Map<String, dynamic>?;
+    final billData = json['bill'] as Map<String, dynamic>?;
+    final paymentsList = json['payments'] as List<dynamic>?;
+
+    final vehicleModel = json['vehicleModel'] as String? ??
+        vehicleData?['model'] as String? ??
+        '';
+    final vehiclePlate = json['vehiclePlate'] as String? ??
+        vehicleData?['plateNumber'] as String? ??
+        '';
+    final vehicleType = json['vehicleType'] as String? ??
+        vehicleData?['type'] as String?;
+
+    final dateParsed = json['completedAt'] != null
+        ? DateTime.tryParse(json['completedAt'] as String) ?? DateTime.now()
+        : (json['createdAt'] != null
+            ? DateTime.tryParse(json['createdAt'] as String) ?? DateTime.now()
+            : (json['date'] != null
+                ? DateTime.tryParse(json['date'] as String) ?? DateTime.now()
+                : DateTime.now()));
+
+    final totalAmountParsed = (json['finalAmount'] as num?)?.toDouble() ??
+        (json['totalAmount'] as num?)?.toDouble() ??
+        (billData?['grandTotal'] as num?)?.toDouble() ??
+        (paymentsList != null && paymentsList.isNotEmpty
+            ? ((paymentsList[0] as Map<String, dynamic>?)?['amount'] as num?)?.toDouble()
+            : null) ??
+        (json['estimatedAmount'] as num?)?.toDouble() ??
+        0.0;
 
     return ServiceRequestModel(
       id: json['id'] as String? ?? '',
-      vehiclePlate: json['vehiclePlate'] as String? ?? '',
-      vehicleModel: json['vehicleModel'] as String? ?? '',
-      vehicleType: json['vehicleType'] as String?,
+      vehiclePlate: vehiclePlate,
+      vehicleModel: vehicleModel,
+      vehicleType: vehicleType,
       vehicleId: json['vehicleId'] as String?,
       serviceType: json['serviceType'] as String? ?? 'Mechanic',
       problem: json['problemDescription'] as String? ??
           json['problem'] as String? ??
           '',
       status: status,
-      date: json['createdAt'] != null
-          ? DateTime.tryParse(json['createdAt'] as String) ?? DateTime.now()
-          : (json['date'] != null
-              ? DateTime.tryParse(json['date'] as String) ?? DateTime.now()
-              : DateTime.now()),
+      date: dateParsed,
       providerName: providerData?['name'] as String? ??
           json['providerName'] as String? ??
           'Assigning...',
       providerId: json['providerId'] as String? ?? providerData?['id'] as String?,
       providerMobile: providerData?['mobile'] as String? ?? json['providerMobile'] as String?,
-      totalAmount: (json['estimatedAmount'] as num?)?.toDouble() ??
-          (json['totalAmount'] as num?)?.toDouble() ??
-          0.0,
+      totalAmount: totalAmountParsed,
       location: loc,
       distanceFromProvider: (json['distanceFromProvider'] as num?)?.toDouble(),
       customerLatitude: lat,

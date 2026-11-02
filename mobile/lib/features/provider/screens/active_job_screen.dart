@@ -153,6 +153,8 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                           const SizedBox(height: 16),
                           Text(
                             '$vehicleModel$vehicleType',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w900,
@@ -162,6 +164,8 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                           const SizedBox(height: 4),
                           Text(
                             'Plate: $vehiclePlate • Customer: $customerName',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(fontSize: 13, color: Color(0xFFCBD5E1)),
                           ),
                           const SizedBox(height: 12),

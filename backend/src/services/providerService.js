@@ -232,15 +232,20 @@ class ProviderService {
    * 5. Get provider's own active/recent service requests.
    * Returns requests assigned to this provider.
    */
-  async getMyRequests(providerUserId) {
+  async getMyRequests(providerUserId, options = {}) {
     if (!prisma) {
       const err = new Error('Database not available');
       err.statusCode = 503;
       throw err;
     }
 
+    const where = { providerId: providerUserId };
+    if (options.status) {
+      where.status = options.status;
+    }
+
     return await prisma.serviceRequest.findMany({
-      where: { providerId: providerUserId },
+      where,
       include: {
         customer: {
           select: {
@@ -251,8 +256,83 @@ class ProviderService {
           },
         },
         vehicle: true,
+        bill: {
+          include: {
+            items: true,
+            payment: true,
+          },
+        },
+        payments: true,
       },
       orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  /**
+   * 5b. Get completed job history for the authenticated provider.
+   * Only returns requests where providerId === providerUserId and status === 'COMPLETED'.
+   */
+  async getJobHistory(providerUserId) {
+    if (!prisma) {
+      const err = new Error('Database not available');
+      err.statusCode = 503;
+      throw err;
+    }
+
+    // Verify provider exists and is a PROVIDER
+    const user = await prisma.user.findUnique({
+      where: { id: providerUserId },
+      include: { providerProfile: true },
+    });
+
+    if (!user || user.role !== 'PROVIDER') {
+      const err = new Error('Provider not found');
+      err.statusCode = 404;
+      throw err;
+    }
+
+    const completedRequests = await prisma.serviceRequest.findMany({
+      where: {
+        providerId: providerUserId,
+        status: 'COMPLETED',
+      },
+      include: {
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            mobile: true,
+            email: true,
+          },
+        },
+        vehicle: true,
+        bill: {
+          include: {
+            items: true,
+            payment: true,
+          },
+        },
+        payments: true,
+        rating: true,
+      },
+      orderBy: [
+        { completedAt: 'desc' },
+        { updatedAt: 'desc' },
+      ],
+    });
+
+    return completedRequests.map((req) => {
+      const finalAmount =
+        req.finalAmount ??
+        req.bill?.grandTotal ??
+        (req.payments && req.payments.length > 0 ? req.payments[0].amount : null) ??
+        req.estimatedAmount ??
+        0;
+
+      return {
+        ...req,
+        totalAmount: finalAmount,
+      };
     });
   }
 

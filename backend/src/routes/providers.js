@@ -52,6 +52,14 @@ router.get(
   providerController.getMyRequests
 );
 
+// GET /api/providers/history — Get completed job history for the authenticated provider
+router.get(
+  '/history',
+  authenticateToken,
+  requireRole('PROVIDER'),
+  providerController.getJobHistory
+);
+
 // GET /api/providers/earnings — Get real earnings, commission, and payment history
 router.get(
   '/earnings',

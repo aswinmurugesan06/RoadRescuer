@@ -55,8 +55,9 @@ class AuthService {
 
   /**
    * Authenticates user via email or mobile and password.
+   * If expectedRole is specified, verifies that the user belongs to that role.
    */
-  async login({ loginIdentifier, password }) {
+  async login({ loginIdentifier, password, expectedRole }) {
     // 1. Find user by email or mobile
     const user = await userRepository.findByIdentifier(loginIdentifier);
     if (!user) {
@@ -80,7 +81,27 @@ class AuthService {
       throw err;
     }
 
-    // 4. Issue JWT
+    // 4. Verify role against expectedRole if specified
+    if (expectedRole) {
+      const normalizedExpected = String(expectedRole).trim().toUpperCase();
+      const userRole = String(user.role).trim().toUpperCase();
+      if (userRole !== normalizedExpected) {
+        const roleLabels = {
+          CUSTOMER: 'Vehicle User',
+          PROVIDER: 'Service Provider',
+          ADMIN: 'Platform Admin',
+        };
+        const actualLabel = roleLabels[userRole] || userRole;
+        const expectedLabel = roleLabels[normalizedExpected] || normalizedExpected;
+        const err = new Error(
+          `Access denied: This account is registered as ${actualLabel}. Please select ${actualLabel} on the role selection screen to sign in.`
+        );
+        err.statusCode = 403;
+        throw err;
+      }
+    }
+
+    // 5. Issue JWT
     const token = generateToken({
       userId: user.id,
       role: user.role,

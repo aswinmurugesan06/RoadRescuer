@@ -1,4 +1,5 @@
 import '../models/provider_model.dart';
+import '../models/service_request_model.dart';
 import 'api_client.dart';
 
 /// Handles all provider-management API calls for the authenticated provider.
@@ -66,6 +67,15 @@ class ProviderService {
     final response = await ApiClient.get('$_path/my-requests');
     final data = response['data'] as List<dynamic>;
     return data.cast<Map<String, dynamic>>();
+  }
+
+  /// GET /api/providers/history — Fetch completed job history for the authenticated provider.
+  static Future<List<ServiceRequestModel>> getJobHistory() async {
+    final response = await ApiClient.get('$_path/history');
+    final data = response['data'] as List<dynamic>? ?? [];
+    return data
+        .map((json) => ServiceRequestModel.fromJson(json as Map<String, dynamic>))
+        .toList();
   }
 
   /// GET /api/providers/earnings — Fetch calculated earnings, commission, and payment history.

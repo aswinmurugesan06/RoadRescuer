@@ -74,8 +74,22 @@ async function updateLocation(req, res, next) {
  */
 async function getMyRequests(req, res, next) {
   try {
-    const requests = await providerService.getMyRequests(req.user.userId);
+    const { status } = req.query;
+    const requests = await providerService.getMyRequests(req.user.userId, { status });
     res.json({ status: 'success', data: requests });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * GET /api/providers/history
+ * Returns completed service requests for the authenticated provider.
+ */
+async function getJobHistory(req, res, next) {
+  try {
+    const history = await providerService.getJobHistory(req.user.userId);
+    res.json({ status: 'success', data: history });
   } catch (err) {
     next(err);
   }
@@ -125,6 +139,7 @@ module.exports = {
   setAvailability,
   updateLocation,
   getMyRequests,
+  getJobHistory,
   adminSetVerificationStatus,
   getEarnings,
 };

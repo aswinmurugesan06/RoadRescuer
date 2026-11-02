@@ -38,22 +38,40 @@ class _LoginScreenState extends State<LoginScreen> {
       final res = await AuthService.login(
         identifier: _phoneCtrl.text.trim(),
         password: _passwordCtrl.text,
+        expectedRole: _role,
       );
 
       if (!mounted) return;
       setState(() => _isLoading = false);
 
       final user = res['user'] as Map<String, dynamic>?;
-      final role = (user?['role'] as String? ?? _role).toUpperCase();
+      final actualRole = (user?['role'] as String? ?? '').toUpperCase();
 
-      if (role == 'PROVIDER') {
+      if (actualRole.isNotEmpty && actualRole != _role) {
+        await AuthService.clearSession();
+        if (!mounted) return;
+        final actualName = _getRoleDisplayName(actualRole);
+        final expectedName = _getRoleDisplayName(_role);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Access denied: This account is registered as $actualName. Please select $actualName to sign in instead of $expectedName.',
+            ),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+        return;
+      }
+
+      if (_role == 'PROVIDER') {
         Navigator.pushNamedAndRemoveUntil(context, AppRoutes.provider, (r) => false);
-      } else if (role == 'ADMIN') {
+      } else if (_role == 'ADMIN') {
         Navigator.pushNamedAndRemoveUntil(context, AppRoutes.adminDashboard, (r) => false);
       } else {
         Navigator.pushNamedAndRemoveUntil(context, AppRoutes.customer, (r) => false);
       }
     } on ApiException catch (e) {
+      await AuthService.clearSession();
       if (!mounted) return;
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -63,6 +81,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       );
     } catch (e) {
+      await AuthService.clearSession();
       if (!mounted) return;
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -71,6 +90,19 @@ class _LoginScreenState extends State<LoginScreen> {
           backgroundColor: AppColors.danger,
         ),
       );
+    }
+  }
+
+  String _getRoleDisplayName(String role) {
+    switch (role.toUpperCase()) {
+      case 'PROVIDER':
+        return 'Service Provider';
+      case 'ADMIN':
+        return 'Platform Admin';
+      case 'CUSTOMER':
+        return 'Vehicle User';
+      default:
+        return role;
     }
   }
 

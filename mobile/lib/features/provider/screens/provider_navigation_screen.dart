@@ -290,118 +290,130 @@ class _ProviderNavigationScreenState extends State<ProviderNavigationScreen> {
               left: 16,
               right: 16,
               bottom: 16,
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.surfaceDark : Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.12),
-                      blurRadius: 20,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _locationLoading || _isRouting
-                                ? const Text(
-                                    'Calculating route & ETA...',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  )
-                                : Row(
-                                    children: [
-                                      Text(
+              child: SafeArea(
+                top: false,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.surfaceDark : Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.12),
+                        blurRadius: 20,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                _locationLoading || _isRouting
+                                    ? const Text(
+                                        'Calculating route & ETA...',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      )
+                                    : Text(
                                         '$distanceLabel • $etaLabel',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                         style: const TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.w900,
                                           color: AppColors.primary,
                                         ),
                                       ),
-                                    ],
+                                const SizedBox(height: 4),
+                                Text(
+                                  vehicleDesc,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
                                   ),
-                            const SizedBox(height: 4),
-                            Text(
-                              vehicleDesc,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            if (requestId != null)
-                              Text(
-                                'Request #${requestId.substring(0, 8).toUpperCase()}',
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: AppColors.textSecondaryLight,
                                 ),
-                              ),
-                          ],
-                        ),
-                        if (customerMobile != null)
-                          IconButton(
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Calling $customerMobile...'),
-                                ),
-                              );
-                            },
-                            icon: const Icon(
-                              Icons.call_rounded,
-                              color: AppColors.primary,
-                              size: 28,
-                            ),
-                          )
-                        else
-                          IconButton(
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Calling Customer...'),
-                                ),
-                              );
-                            },
-                            icon: const Icon(
-                              Icons.call_rounded,
-                              color: AppColors.primary,
-                              size: 28,
+                                if (requestId != null) ...[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Request #${requestId.length >= 8 ? requestId.substring(0, 8).toUpperCase() : requestId.toUpperCase()}',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: AppColors.textSecondaryLight,
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                           ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    RRButton(
-                      label: 'I Have Arrived at Location',
-                      icon: Icons.check_circle_outline_rounded,
-                      onPressed: () async {
-                        final nav = Navigator.of(context);
-                        if (widget.request != null) {
-                          try {
-                            await ServiceRequestService.updateStatus(widget.request!.id, 'IN_SERVICE');
-                          } catch (_) {}
-                        }
-                        nav.pushReplacementNamed(
-                          AppRoutes.providerServicePin,
-                          arguments: {'request': widget.request},
-                        );
-                      },
-                    ),
-                  ],
+                          const SizedBox(width: 8),
+                          if (customerMobile != null)
+                            IconButton(
+                              onPressed: () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Calling $customerMobile...'),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(
+                                Icons.call_rounded,
+                                color: AppColors.primary,
+                                size: 28,
+                              ),
+                            )
+                          else
+                            IconButton(
+                              onPressed: () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Calling Customer...'),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(
+                                Icons.call_rounded,
+                                color: AppColors.primary,
+                                size: 28,
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      RRButton(
+                        label: 'I Have Arrived at Location',
+                        icon: Icons.check_circle_outline_rounded,
+                        onPressed: () async {
+                          final nav = Navigator.of(context);
+                          if (widget.request != null) {
+                            try {
+                              await ServiceRequestService.updateStatus(widget.request!.id, 'IN_SERVICE');
+                            } catch (_) {}
+                          }
+                          nav.pushReplacementNamed(
+                            AppRoutes.providerServicePin,
+                            arguments: {'request': widget.request},
+                          );
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

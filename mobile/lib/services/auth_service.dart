@@ -71,33 +71,66 @@ class AuthService {
   }
 
   /// Log in with email or mobile identifier + password.
+  /// If [expectedRole] is specified, verifies that authenticated user matches [expectedRole].
   static Future<Map<String, dynamic>> login({
     required String identifier,
     required String password,
+    String? expectedRole,
   }) async {
+    final body = <String, dynamic>{
+      'identifier': identifier,
+      'password': password,
+    };
+    if (expectedRole != null && expectedRole.isNotEmpty) {
+      body['expectedRole'] = expectedRole.toUpperCase();
+    }
+
     final res = await ApiClient.post(
       '/auth/login',
-      {
-        'identifier': identifier,
-        'password': password,
-      },
+      body,
       auth: false,
     );
 
     final data = res['data'] as Map<String, dynamic>;
     final token = data['token'] as String;
     final user = data['user'] as Map<String, dynamic>;
+    final actualRole = (user['role'] as String? ?? '').toUpperCase();
+
+    // Secondary client-side guard against role mismatch
+    if (expectedRole != null && expectedRole.isNotEmpty) {
+      final normalizedExpected = expectedRole.toUpperCase();
+      if (actualRole != normalizedExpected) {
+        throw ApiException(
+          statusCode: 403,
+          message:
+              'Access denied: This account is registered as ${_formatRoleLabel(actualRole)}. Please select ${_formatRoleLabel(actualRole)} on the role selection screen to sign in.',
+        );
+      }
+    }
 
     await saveSession(
       token: token,
       userId: user['id'] as String,
       name: user['name'] as String,
-      role: (user['role'] as String).toUpperCase(),
+      role: actualRole,
       email: user['email'] as String?,
       mobile: user['mobile'] as String?,
     );
 
     return data;
+  }
+
+  static String _formatRoleLabel(String role) {
+    switch (role.toUpperCase()) {
+      case 'PROVIDER':
+        return 'Service Provider';
+      case 'ADMIN':
+        return 'Platform Admin';
+      case 'CUSTOMER':
+        return 'Vehicle User';
+      default:
+        return role;
+    }
   }
 
   /// Register a new account.
