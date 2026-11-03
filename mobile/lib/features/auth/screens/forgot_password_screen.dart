@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../../routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
@@ -17,13 +18,35 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _phoneCtrl = TextEditingController();
   bool _isLoading = false;
 
-  void _sendOtp() async {
+  Future<void> _sendResetEmail() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
-    await Future.delayed(const Duration(seconds: 1));
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-    Navigator.pushNamed(context, AppRoutes.otp, arguments: {'phone': _phoneCtrl.text});
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(
+        email: _phoneCtrl.text.trim().toLowerCase(),
+      );
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Password reset email sent. Check your inbox.'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+      Navigator.pop(context);
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      final message = e.code == 'user-not-found'
+          ? 'No Firebase account uses that email address.'
+          : (e.message ?? 'Could not send the reset email.');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+    }
   }
 
   @override
@@ -67,23 +90,26 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 const SizedBox(height: 8),
                 const Center(
                   child: Text(
-                    'Enter your registered phone number.\nWe\'ll send you an OTP to reset your password.',
+                    'Enter the email address registered in Firebase.\nWe\'ll send you a secure password reset link.',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 14, color: AppColors.textSecondaryLight, height: 1.5),
                   ),
                 ),
                 const SizedBox(height: 40),
                 RRTextField(
-                  label: 'Phone Number',
-                  hint: '9876543210',
+                  label: 'Email Address',
+                  hint: 'user@example.com',
                   controller: _phoneCtrl,
-                  keyboardType: TextInputType.phone,
-                  prefixIcon: Icons.phone_outlined,
-                  validator: Validators.phone,
-                  maxLength: 10,
+                  keyboardType: TextInputType.emailAddress,
+                  prefixIcon: Icons.email_outlined,
+                  validator: Validators.email,
                 ),
                 const SizedBox(height: 28),
-                RRButton(label: 'Send OTP', onPressed: _sendOtp, isLoading: _isLoading),
+                RRButton(
+                  label: 'Send Reset Email',
+                  onPressed: _sendResetEmail,
+                  isLoading: _isLoading,
+                ),
                 const SizedBox(height: 20),
                 Center(
                   child: TextButton(

@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "366952442951",
+    "project_id": "road-rescuer",
+    "storage_bucket": "road-rescuer.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:366952442951:android:c286153fe490c50e2d9562",
+        "android_client_info": {
+          "package_name": "com.roadrescue"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "366952442951-ttn20ttu2vcm6qog5584h3qvtc3c704i.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.roadrescue",
+            "certificate_hash": "bc4a0aab999db8ba12c3fb8b17e8e061d0a560dc"
+          }
+        },
+        {
+          "client_id": "366952442951-erbms9jhkcg9fvnmis6dihc80r7da6b5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCD0OXoxyPvejSVc7cYws0KH16OJMyCPCc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "366952442951-erbms9jhkcg9fvnmis6dihc80r7da6b5.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

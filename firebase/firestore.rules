@@ -1,0 +1,130 @@
+rules_version = '2';
+
+// RoadRescue Firestore rules.
+//
+// Data model:
+//   users/{uid}                          profile (CUSTOMER / PROVIDER / ADMIN)
+//   users/{uid}/vehicles/{vehicleId}     customer garage
+//   serviceRequests/{requestId}          roadside assistance jobs
+//   bills/{billId}                       invoices
+//   payments/{paymentId}                 completed payments
+//   ratings/{ratingId}                   customer reviews
+//   deviceTokens/{token}                 FCM registrations
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function uid() {
+      return request.auth.uid;
+    }
+
+    function isAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(uid()))
+        && get(/databases/$(database)/documents/users/$(uid())).data.role == 'ADMIN';
+    }
+
+    // Fields that other participants may update on a provider's profile.
+    function onlyCountersChanged() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+        .hasOnly(['rating', 'ratingCount', 'totalJobs', 'availability', 'updatedAt']);
+    }
+
+    match /users/{userId} {
+      allow read: if signedIn();
+
+      allow create: if signedIn()
+        && uid() == userId
+        && request.resource.data.uid == userId
+        && request.resource.data.name is string
+        && request.resource.data.mobile is string
+        && request.resource.data.role in ['CUSTOMER', 'PROVIDER', 'ADMIN'];
+
+      allow update: if signedIn() && (
+        (uid() == userId
+          && request.resource.data.uid == userId
+          && request.resource.data.role == resource.data.role)
+        || isAdmin()
+        || onlyCountersChanged()
+      );
+
+      allow delete: if signedIn() && uid() == userId;
+
+      match /vehicles/{vehicleId} {
+        allow read, write: if signedIn() && uid() == userId;
+      }
+    }
+
+    match /serviceRequests/{requestId} {
+      allow read: if signedIn();
+
+      allow create: if signedIn()
+        && request.resource.data.customerId == uid();
+
+      allow update: if signedIn() && (
+        isAdmin()
+        || resource.data.customerId == uid()
+        || resource.data.providerId == uid()
+        || (resource.data.providerId == null
+            && request.resource.data.providerId == uid())
+        || (resource.data.providerId == null
+            && request.resource.data.status == 'CANCELLED')
+      );
+
+      allow delete: if signedIn() && (
+        isAdmin()
+        || resource.data.customerId == uid()
+        || resource.data.providerId == uid()
+      );
+    }
+
+    match /bills/{billId} {
+      allow read: if signedIn();
+
+      allow create: if signedIn()
+        && request.resource.data.providerId == uid();
+
+      allow update: if signedIn() && (
+        isAdmin()
+        || resource.data.providerId == uid()
+        || resource.data.customerId == uid()
+      );
+
+      allow delete: if signedIn() && (
+        isAdmin()
+        || resource.data.providerId == uid()
+        || resource.data.customerId == uid()
+      );
+    }
+
+    match /payments/{paymentId} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.customerId == uid();
+      allow update: if isAdmin();
+      allow delete: if signedIn() && (
+        isAdmin()
+        || resource.data.customerId == uid()
+        || resource.data.providerId == uid()
+      );
+    }
+
+    match /ratings/{ratingId} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.customerId == uid();
+      allow update, delete: if signedIn() && (
+        isAdmin() || resource.data.customerId == uid()
+      );
+    }
+
+    match /deviceTokens/{token} {
+      allow read, delete: if signedIn() && resource.data.userId == uid();
+      allow create: if signedIn() && request.resource.data.userId == uid();
+      allow update: if signedIn() && resource.data.userId == uid();
+    }
+  }
+}

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../services/auth_service.dart';
 import '../../../widgets/rr_button.dart';
 
 class OtpScreen extends StatefulWidget {
@@ -24,6 +25,45 @@ class _OtpScreenState extends State<OtpScreen> {
   void initState() {
     super.initState();
     _startTimer();
+    _sendOtp();
+  }
+
+  Future<void> _sendOtp() async {
+    try {
+      final result = await AuthService.sendOtp(mobile: widget.phone);
+      if (result['verificationId'] == null && result['autoVerified'] == true) {
+        _navigateForRole(
+          (result['user'] as Map<String, dynamic>?)?['role'] as String?,
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('ApiException', '').trim())),
+      );
+    }
+  }
+
+  void _navigateForRole(String? role) {
+    if (!mounted) return;
+    final normalized = (role ?? 'CUSTOMER').toUpperCase();
+    if (normalized == 'PROVIDER') {
+      Navigator.pushNamedAndRemoveUntil(context, AppRoutes.provider, (r) => false);
+    } else if (normalized == 'ADMIN') {
+      AuthService.clearSession();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Admin access is available on the RoadRescue web admin dashboard.',
+          ),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+      Navigator.pushNamedAndRemoveUntil(
+          context, AppRoutes.welcome, (r) => false);
+    } else {
+      Navigator.pushNamedAndRemoveUntil(context, AppRoutes.customer, (r) => false);
+    }
   }
 
   void _startTimer() {
@@ -39,9 +79,7 @@ class _OtpScreenState extends State<OtpScreen> {
   void _resend() {
     setState(() => _resendSeconds = 30);
     _startTimer();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('OTP sent!')),
-    );
+    _sendOtp();
   }
 
   String get _otp => _ctrlList.map((c) => c.text).join();
@@ -54,10 +92,26 @@ class _OtpScreenState extends State<OtpScreen> {
       return;
     }
     setState(() => _isLoading = true);
-    await Future.delayed(const Duration(seconds: 1));
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-    Navigator.pushNamedAndRemoveUntil(context, AppRoutes.roleSelect, (r) => false);
+    try {
+      final result = await AuthService.verifyOtp(
+        mobile: widget.phone,
+        otp: _otp,
+      );
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      _navigateForRole(
+        (result['user'] as Map<String, dynamic>?)?['role'] as String?,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceFirst('ApiException', '').trim()),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+    }
   }
 
   @override

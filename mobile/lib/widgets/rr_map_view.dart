@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:maplibre_gl/mapbox_gl.dart';
+import 'package:maplibre_gl/maplibre_gl.dart';
 import '../core/theme/app_colors.dart';
 import '../services/location_service.dart';
 
@@ -56,7 +56,7 @@ class RRMapView extends StatefulWidget {
   final String markerTitle;
   final Color markerColor;
   final String styleString;
-  final ValueChanged<MaplibreMapController>? onMapCreated;
+  final ValueChanged<MapLibreMapController>? onMapCreated;
   final VoidCallback? onLocationUpdated;
 
   const RRMapView({
@@ -88,7 +88,7 @@ class RRMapView extends StatefulWidget {
 }
 
 class RRMapViewState extends State<RRMapView> {
-  MaplibreMapController? _controller;
+  MapLibreMapController? _controller;
   bool _isMapReady = false;
   bool _isLoadingLocation = false;
   String? _mapError;
@@ -151,7 +151,7 @@ class RRMapViewState extends State<RRMapView> {
     }
   }
 
-  void _onMapCreated(MaplibreMapController controller) {
+  void _onMapCreated(MapLibreMapController controller) {
     _controller = controller;
     widget.onMapCreated?.call(controller);
   }
@@ -288,7 +288,7 @@ class RRMapViewState extends State<RRMapView> {
     return Stack(
       children: [
         // ── MapLibre Map View ─────────────────────────────────────────
-        MaplibreMap(
+        MapLibreMap(
           styleString: widget.styleString,
           initialCameraPosition: CameraPosition(
             target: LatLng(lat, lng),

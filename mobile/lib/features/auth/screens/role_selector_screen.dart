@@ -13,8 +13,14 @@ class RoleSelectorScreen extends StatefulWidget {
 
 class _RoleSelectorScreenState extends State<RoleSelectorScreen> {
   void _handleRoleSelect(String role) async {
-    final isLoggedIn = await AuthService.isLoggedIn();
-    final currentRole = await AuthService.getUserRole();
+    var isLoggedIn = false;
+    String? currentRole;
+    try {
+      isLoggedIn = await AuthService.isLoggedIn();
+      currentRole = await AuthService.getUserRole();
+    } catch (_) {
+      // Firebase may still be starting; fall through to the login screen.
+    }
 
     if (!mounted) return;
 
@@ -23,8 +29,6 @@ class _RoleSelectorScreenState extends State<RoleSelectorScreen> {
         Navigator.pushNamedAndRemoveUntil(context, AppRoutes.customer, (r) => false);
       } else if (role == 'PROVIDER') {
         Navigator.pushNamedAndRemoveUntil(context, AppRoutes.provider, (r) => false);
-      } else if (role == 'ADMIN') {
-        Navigator.pushNamedAndRemoveUntil(context, AppRoutes.adminDashboard, (r) => false);
       }
     } else {
       Navigator.pushNamed(context, AppRoutes.login, arguments: {'role': role});
@@ -99,17 +103,6 @@ class _RoleSelectorScreenState extends State<RoleSelectorScreen> {
                 description: 'Receive requests, manage availability and track your earnings.',
                 accentColor: const Color(0xFF2563EB),
                 onTap: () => _handleRoleSelect('PROVIDER'),
-              ),
-              const SizedBox(height: 16),
-
-              // CARD 3 — PLATFORM ADMIN
-              _RoleCard(
-                icon: Icons.shield_rounded,
-                title: 'Platform Admin',
-                subtitle: 'Manage RoadRescue',
-                description: 'Verify providers, monitor requests and manage the platform.',
-                accentColor: const Color(0xFF6366F1),
-                onTap: () => _handleRoleSelect('ADMIN'),
               ),
               const SizedBox(height: 28),
 

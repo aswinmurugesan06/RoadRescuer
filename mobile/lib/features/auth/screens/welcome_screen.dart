@@ -86,9 +86,10 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               opacity: _fadeAnim,
               child: SlideTransition(
                 position: _slideAnim,
-                child: Padding(
+                child: SingleChildScrollView(
                   padding: const EdgeInsets.all(28),
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

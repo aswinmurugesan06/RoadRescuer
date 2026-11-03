@@ -58,7 +58,7 @@ class DeviceLocation {
       accuracy: position.accuracy,
       altitude: position.altitude,
       speed: position.speed,
-      timestamp: position.timestamp ?? DateTime.now(),
+      timestamp: position.timestamp,
     );
   }
 

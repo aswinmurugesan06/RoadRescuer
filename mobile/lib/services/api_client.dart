@@ -1,11 +1,21 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 import 'auth_service.dart';
 
 /// Base URL of the RoadRescue backend.
-/// On Android emulator use 10.0.2.2; on a real device use your machine's LAN IP.
-const String _kBaseUrl = 'http://10.89.213.64:3000/api';
+///
+/// Override it for a physical device or a deployed API:
+///   flutter run --dart-define=API_BASE_URL=http://192.168.1.20:3000/api
+///
+/// Defaults to `localhost` on web and `10.0.2.2` on the Android emulator.
+const String _kConfiguredBaseUrl = String.fromEnvironment('API_BASE_URL');
+final String _kBaseUrl = _kConfiguredBaseUrl.isNotEmpty
+    ? _kConfiguredBaseUrl
+    : (kIsWeb
+        ? 'http://localhost:3000/api'
+        : 'http://10.0.2.2:3000/api');
 
 /// Thrown when the server returns a non-2xx response.
 class ApiException implements Exception {

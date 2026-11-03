@@ -51,6 +51,12 @@ app.*.symbols
 app.*.map.json
 **/doc/api/
 
+# ── Firebase local test config (fill in from Firebase Console) ───────────────
+mobile/firebase_test_config.json
+
+# Firebase CLI deploy cache
+.firebase/
+
 # ── Logs & Databases ─────────────────────────────────────────────────────────
 *.log
 *.sqlite

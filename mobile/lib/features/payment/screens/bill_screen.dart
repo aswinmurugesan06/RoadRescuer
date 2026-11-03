@@ -3,6 +3,7 @@ import '../../../routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/bill_model.dart';
 import '../../../services/billing_service.dart';
+import '../../../widgets/glass.dart';
 import '../../../widgets/rr_button.dart';
 import '../../../widgets/rr_card.dart';
 
@@ -223,16 +224,17 @@ class _BillScreenState extends State<BillScreen> {
           ),
         ],
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Provider header
+      body: GlassBackground(
+        child: SafeArea(
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Provider header
                     RRCard(
                       child: Row(
                         children: [
@@ -576,7 +578,8 @@ class _BillScreenState extends State<BillScreen> {
                   ),
                 ),
               ),
-          ],
+            ],
+          ),
         ),
       ),
     );

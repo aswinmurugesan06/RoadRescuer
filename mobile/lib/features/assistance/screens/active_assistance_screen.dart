@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:maplibre_gl/mapbox_gl.dart';
+import 'package:flutter/services.dart';
+import 'package:maplibre_gl/maplibre_gl.dart';
 import '../../../routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/service_request_model.dart';
@@ -9,6 +10,8 @@ import '../../../services/service_request_service.dart';
 import '../../../services/billing_service.dart';
 import '../../../services/socket_service.dart';
 import '../../../services/routing_service.dart';
+import '../../../services/phone_service.dart';
+import '../../../widgets/glass.dart';
 import '../../../widgets/rr_button.dart';
 import '../../../widgets/rr_card.dart';
 import '../../../widgets/rr_map_view.dart';
@@ -37,14 +40,6 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
   double? _routeDistanceKm;
   int? _routeDurationMinutes;
   bool _isCalculatingRoute = false;
-
-  final List<String> _stepTitles = [
-    'Request Accepted',
-    'Provider En Route',
-    'Arrived at Breakdown Spot',
-    'Repair In Progress',
-    'Service Completed',
-  ];
 
   @override
   void initState() {
@@ -286,150 +281,471 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final req = _request;
     final status = req?.status ?? RequestStatus.accepted;
-    final isSearching = status == RequestStatus.pending || status == RequestStatus.searching;
+    final isSearching =
+        status == RequestStatus.pending || status == RequestStatus.searching;
     final isCancelled = status == RequestStatus.cancelled;
-    final isCompleted = status == RequestStatus.completed || (_bill != null && _bill!.status == 'PAID');
-    final hasPendingInvoice = _bill != null && (_bill!.status == 'PENDING' || _bill!.status == 'APPROVED');
+    final isCompleted =
+        status == RequestStatus.completed || (_bill != null && _bill!.status == 'PAID');
+    final hasPendingInvoice = _bill != null &&
+        (_bill!.status == 'PENDING' || _bill!.status == 'APPROVED');
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(isSearching
-            ? 'Searching for Provider'
-            : (isCancelled
-                ? 'Request Cancelled'
-                : (hasPendingInvoice
-                    ? 'Payment Required'
-                    : (isCompleted ? 'Assistance Completed' : 'Live Assistance Status')))),
-        automaticallyImplyLeading: false,
-        actions: [
-          IconButton(
-            icon: _isRefreshing
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.refresh_rounded),
-            tooltip: 'Refresh Status',
-            onPressed: () async {
-              setState(() => _isRefreshing = true);
-              await _refreshRequestStatus();
-              if (mounted) setState(() => _isRefreshing = false);
-            },
+      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+      body: GlassBackground(
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildGlassHeader(
+                isDark,
+                isSearching: isSearching,
+                isCancelled: isCancelled,
+                isCompleted: isCompleted,
+                hasPendingInvoice: hasPendingInvoice,
+              ),
+              Expanded(
+                child: RefreshIndicator(
+                  color: AppColors.primary,
+                  onRefresh: () async {
+                    setState(() => _isRefreshing = true);
+                    await _refreshRequestStatus();
+                    if (mounted) setState(() => _isRefreshing = false);
+                  },
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(
+                      parent: BouncingScrollPhysics(),
+                    ),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (isSearching)
+                          _buildSearchingBanner()
+                        else if (isCancelled)
+                          _buildCancelledBanner()
+                        else if (isCompleted && !hasPendingInvoice)
+                          _buildCompletedBanner()
+                        else
+                          _buildActiveBanner(),
+                        const SizedBox(height: 14),
+                        if (isSearching) ...[
+                          _buildSearchingDetailsCard(isDark),
+                          const SizedBox(height: 16),
+                          _buildCancelSection(),
+                        ] else if (isCancelled) ...[
+                          _buildCancelledDetailsCard(isDark),
+                          const SizedBox(height: 16),
+                          RRButton(
+                            label: 'Return to Customer Dashboard',
+                            icon: Icons.home_rounded,
+                            onPressed: () {
+                              Navigator.pushNamedAndRemoveUntil(
+                                context,
+                                AppRoutes.customer,
+                                (r) => false,
+                              );
+                            },
+                          ),
+                        ] else ...[
+                          _buildStepperTrack(),
+                          const SizedBox(height: 12),
+                          _buildEtaCard(isDark, status, hasPendingInvoice),
+                          const SizedBox(height: 12),
+                          if (_providerLat != null && _providerLng != null) ...[
+                            _buildProviderLiveMapCard(),
+                            const SizedBox(height: 12),
+                          ],
+                          _buildProviderContactCard(isDark),
+                          const SizedBox(height: 12),
+                          if (hasPendingInvoice) ...[
+                            _buildInvoiceCard(isDark),
+                            const SizedBox(height: 12),
+                          ] else if (_bill != null && _bill!.status == 'PAID') ...[
+                            _buildPaidInvoiceCard(isDark),
+                            const SizedBox(height: 12),
+                          ],
+                          if (!isCompleted && !hasPendingInvoice) ...[
+                            _buildPinCard(),
+                            const SizedBox(height: 12),
+                          ],
+                          _buildSafetyCard(isDark),
+                          const SizedBox(height: 12),
+                          _buildShareTracking(),
+                          if (!isCompleted &&
+                              !hasPendingInvoice &&
+                              (status == RequestStatus.accepted ||
+                                  status == RequestStatus.arriving)) ...[
+                            const SizedBox(height: 12),
+                            _buildCancelSection(),
+                          ],
+                          if (isCompleted ||
+                              (_bill != null && _bill!.status == 'PAID')) ...[
+                            const SizedBox(height: 14),
+                            RRButton(
+                              label: 'Rate & Review Provider',
+                              icon: Icons.star_rounded,
+                              onPressed: () => Navigator.pushNamed(
+                                context,
+                                AppRoutes.rating,
+                                arguments: {
+                                  'request': _request,
+                                  'requestId': _request?.id,
+                                },
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            RRButton(
+                              label: 'View Receipt & Summary',
+                              icon: Icons.receipt_long_rounded,
+                              variant: RRButtonVariant.secondary,
+                              onPressed: () => Navigator.pushNamed(
+                                context,
+                                AppRoutes.receipt,
+                                arguments: {'requestId': _request?.id},
+                              ),
+                            ),
+                          ],
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-          IconButton(
-            icon: const Icon(Icons.close_rounded),
-            onPressed: () {
-              Navigator.pushNamedAndRemoveUntil(
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGlassHeader(
+    bool isDark, {
+    required bool isSearching,
+    required bool isCancelled,
+    required bool isCompleted,
+    required bool hasPendingInvoice,
+  }) {
+    final title = isSearching
+        ? 'Finding your provider'
+        : isCancelled
+            ? 'Request cancelled'
+            : hasPendingInvoice
+                ? 'Review your bill'
+                : isCompleted
+                    ? 'Assistance complete'
+                    : 'Live assistance';
+    final subtitle = isSearching
+        ? 'Matching you with the nearest verified responder'
+        : isCancelled
+            ? 'This request is closed'
+            : hasPendingInvoice
+                ? 'Approve the bill to continue to payment'
+                : isCompleted
+                    ? 'Thank you for choosing RoadRescue'
+                    : 'Track your provider and service in real time';
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+      child: GlassCard(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        borderRadius: 18,
+        child: Row(
+          children: [
+            _glassIconButton(
+              icon: Icons.arrow_back_rounded,
+              onTap: () => Navigator.pushNamedAndRemoveUntil(
                 context,
                 AppRoutes.customer,
                 (r) => false,
-              );
-            },
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: 'Plus Jakarta Sans',
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.3,
+                      color: isDark ? Colors.white : AppColors.textPrimaryLight,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 9.5,
+                      color: isDark
+                          ? AppColors.textSecondaryDark
+                          : AppColors.textSecondaryLight,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            _glassIconButton(
+              icon: Icons.refresh_rounded,
+              isLoading: _isRefreshing,
+              onTap: () async {
+                setState(() => _isRefreshing = true);
+                await _refreshRequestStatus();
+                if (mounted) setState(() => _isRefreshing = false);
+              },
+            ),
+            const SizedBox(width: 6),
+            _glassIconButton(
+              icon: Icons.close_rounded,
+              onTap: () => Navigator.pushNamedAndRemoveUntil(
+                context,
+                AppRoutes.customer,
+                (r) => false,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _glassIconButton({
+    required IconData icon,
+    required VoidCallback onTap,
+    bool isLoading = false,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return GestureDetector(
+      onTap: isLoading ? null : onTap,
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: isDark
+              ? Colors.white.withOpacity(0.06)
+              : Colors.white.withOpacity(0.8),
+          borderRadius: BorderRadius.circular(11),
+          border: Border.all(
+            color: isDark ? Colors.white.withOpacity(0.08) : Colors.white,
+          ),
+        ),
+        child: isLoading
+            ? const Padding(
+                padding: EdgeInsets.all(9),
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : Icon(icon, size: 18),
+      ),
+    );
+  }
+
+  Widget _buildEtaCard(
+    bool isDark,
+    RequestStatus status,
+    bool hasPendingInvoice,
+  ) {
+    if (hasPendingInvoice) {
+      return const SizedBox.shrink();
+    }
+    final isCompleted = status == RequestStatus.completed;
+    final isSearching =
+        status == RequestStatus.pending || status == RequestStatus.searching;
+    final label = isCompleted
+        ? 'Service completed'
+        : isSearching
+            ? 'Finding a nearby responder'
+            : status == RequestStatus.arriving
+                ? 'Provider arriving soon'
+                : 'Service in progress';
+    final detail = isCompleted
+        ? 'Your invoice and receipt are ready'
+        : isSearching
+            ? 'Your request is being matched right now'
+            : _routeDurationMinutes != null
+                ? '${_routeDurationMinutes!} min drive • ${_routeDistanceKm?.toStringAsFixed(1) ?? '—'} km away'
+                : 'Live GPS tracking active';
+    return GlassCard(
+      padding: const EdgeInsets.all(13),
+      color: isDark
+          ? AppColors.cardDark.withOpacity(0.9)
+          : Colors.white.withOpacity(0.82),
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFFE5D35), Color(0xFFE6471E)],
+              ),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.secondary.withOpacity(0.28),
+                  blurRadius: 12,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: Icon(
+              isCompleted
+                  ? Icons.verified_rounded
+                  : isSearching
+                      ? Icons.radar_rounded
+                      : Icons.near_me_rounded,
+              color: Colors.white,
+              size: 19,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label.toUpperCase(),
+                  style: const TextStyle(
+                    fontFamily: 'Plus Jakarta Sans',
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.5,
+                    color: AppColors.secondary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  detail,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    color: isDark
+                        ? AppColors.textSecondaryDark
+                        : AppColors.textSecondaryLight,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (!isCompleted && !isSearching)
+            GlassPill(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+              child: Text(
+                _routeDurationMinutes != null
+                    ? '${_routeDurationMinutes!} min'
+                    : 'Live',
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSafetyCard(bool isDark) {
+    return GlassCard(
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Roadside safety status',
+            style: TextStyle(
+              fontFamily: 'Plus Jakarta Sans',
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+              color: isDark ? Colors.white : AppColors.textPrimaryLight,
+            ),
+          ),
+          const SizedBox(height: 9),
+          _safetyRow(
+            Icons.safety_divider_rounded,
+            'Behind guardrail protocol',
+            'Keep at least 30 ft from the highway lane',
+            AppColors.tertiary,
+          ),
+          const SizedBox(height: 7),
+          _safetyRow(
+            Icons.warning_amber_rounded,
+            'Hazard flashers armed',
+            'Keep hazard lights on while waiting',
+            AppColors.secondary,
           ),
         ],
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── Header Banner ──────────────────────────────────
-              if (isSearching)
-                _buildSearchingBanner()
-              else if (isCancelled)
-                _buildCancelledBanner()
-              else if (isCompleted && !hasPendingInvoice)
-                _buildCompletedBanner()
-              else
-                _buildActiveBanner(),
+    );
+  }
 
-              const SizedBox(height: 24),
-
-              // ── Body Content by State ──────────────────────────
-              if (isSearching) ...[
-                // Searching State Cards
-                _buildSearchingDetailsCard(isDark),
-                const SizedBox(height: 24),
-                _buildCancelSection(),
-              ] else if (isCancelled) ...[
-                // Cancelled State
-                _buildCancelledDetailsCard(isDark),
-                const SizedBox(height: 24),
-                RRButton(
-                  label: 'Return to Customer Dashboard',
-                  icon: Icons.home_rounded,
-                  onPressed: () {
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      AppRoutes.customer,
-                      (r) => false,
-                    );
-                  },
+  Widget _safetyRow(
+    IconData icon,
+    String title,
+    String subtitle,
+    Color color,
+  ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.12)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 17, color: color),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-              ] else ...[
-                // Assigned / Active State
-                _buildProviderContactCard(isDark),
-                const SizedBox(height: 24),
-
-                // ── Real Backend Invoice / Payment Section ──────────
-                if (hasPendingInvoice) ...[
-                  _buildInvoiceCard(isDark),
-                  const SizedBox(height: 24),
-                ] else if (_bill != null && _bill!.status == 'PAID') ...[
-                  _buildPaidInvoiceCard(isDark),
-                  const SizedBox(height: 24),
-                ],
-
-                if (!isCompleted && !hasPendingInvoice) ...[
-                  _buildPinCard(),
-                  const SizedBox(height: 28),
-                ],
-
-                _buildStepperTrack(),
-
-                // ── Live Provider Location Map ──────────────────────
-                if (_providerLat != null && _providerLng != null) ...[
-                  const SizedBox(height: 24),
-                  _buildProviderLiveMapCard(),
-                ],
-                const SizedBox(height: 28),
-
-                if (!isCompleted &&
-                    !hasPendingInvoice &&
-                    (status == RequestStatus.accepted ||
-                        status == RequestStatus.arriving))
-                  _buildCancelSection(),
-
-                if (isCompleted || (_bill != null && _bill!.status == 'PAID')) ...[
-                  RRButton(
-                    label: 'Rate & Review Provider',
-                    icon: Icons.star_rounded,
-                    onPressed: () => Navigator.pushNamed(
-                      context,
-                      AppRoutes.rating,
-                      arguments: {
-                        'request': _request,
-                        'requestId': _request?.id,
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  RRButton(
-                    label: 'View Receipt & Summary',
-                    icon: Icons.receipt_long_rounded,
-                    variant: RRButtonVariant.secondary,
-                    onPressed: () => Navigator.pushNamed(
-                      context,
-                      AppRoutes.receipt,
-                      arguments: {'requestId': _request?.id},
-                    ),
-                  ),
-                ],
+                Text(
+                  subtitle,
+                  style: const TextStyle(fontSize: 9, color: AppColors.textSecondaryLight),
+                ),
               ],
-            ],
+            ),
           ),
+          const Icon(Icons.check_circle_rounded,
+              size: 17, color: AppColors.success),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildShareTracking() {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: () async {
+          final id = _request?.id ?? '';
+          await Clipboard.setData(
+            ClipboardData(text: 'RoadRescue live tracking: request $id'),
+          );
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Live tracking link copied.')),
+            );
+          }
+        },
+        icon: const Icon(Icons.share_location_rounded, size: 18),
+        label: const Text('Share live tracking'),
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size(0, 48),
         ),
       ),
     );
@@ -692,6 +1008,8 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
                 icon: const Icon(Icons.receipt_rounded, size: 16),
                 label: const Text('Receipt'),
                 style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(0, 40),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
                   foregroundColor: AppColors.success,
                   side: const BorderSide(color: AppColors.success),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -706,8 +1024,16 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
 
   // ── Active Banner ──────────────────────────────────────────────────
   Widget _buildActiveBanner() {
+    const stepTitles = [
+      'Request Accepted',
+      'Provider En Route',
+      'Arrived at Breakdown Spot',
+      'Repair In Progress',
+      'Service Completed',
+    ];
     final stepIndex = _currentStepIndex;
-    final stepTitle = stepIndex < _stepTitles.length ? _stepTitles[stepIndex] : 'In Progress';
+    final stepTitle =
+        stepIndex < stepTitles.length ? stepTitles[stepIndex] : 'In Progress';
     final hasPendingInvoice = _bill != null && (_bill!.status == 'PENDING' || _bill!.status == 'APPROVED');
 
     return Container(
@@ -1057,10 +1383,15 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Calling $providerMobile...')),
-                    );
+                  onPressed: () async {
+                    final opened = await PhoneService.call(providerMobile);
+                    if (!opened && context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Could not open the phone dialer.'),
+                        ),
+                      );
+                    }
                   },
                   icon: const Icon(Icons.call_rounded, size: 18),
                   label: const Text('Call Provider'),
@@ -1138,73 +1469,126 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
     );
   }
 
-  // ── Stepper Track ──────────────────────────────────────────────────
+  // ── Progress tracker ───────────────────────────────────────────────
   Widget _buildStepperTrack() {
-    final currentStep = _currentStepIndex;
+    final status = _request?.status ?? RequestStatus.pending;
+    int currentStep;
+    switch (status) {
+      case RequestStatus.pending:
+      case RequestStatus.searching:
+        currentStep = 0;
+        break;
+      case RequestStatus.accepted:
+        currentStep = 1;
+        break;
+      case RequestStatus.arriving:
+        currentStep = 2;
+        break;
+      case RequestStatus.inService:
+      case RequestStatus.active:
+        currentStep = 3;
+        break;
+      case RequestStatus.completed:
+        currentStep = 4;
+        break;
+      case RequestStatus.cancelled:
+        currentStep = 0;
+        break;
+    }
+    const labels = ['Requested', 'Accepted', 'En route', 'Service', 'Done'];
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SectionHeader(title: 'Assistance Progress'),
-        const SizedBox(height: 16),
-        for (int i = 0; i < _stepTitles.length; i++) ...[
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Column(
-                children: [
-                  Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: i <= currentStep ? AppColors.primary : Colors.grey.withOpacity(0.3),
-                    ),
-                    child: Icon(
-                      i < currentStep ? Icons.check : Icons.circle,
-                      color: Colors.white,
-                      size: 14,
-                    ),
-                  ),
-                  if (i < _stepTitles.length - 1)
-                    Container(
-                      width: 2,
-                      height: 36,
-                      color: i < currentStep ? AppColors.primary : Colors.grey.withOpacity(0.3),
-                    ),
-                ],
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _stepTitles[i],
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: i == currentStep ? FontWeight.w800 : FontWeight.w500,
-                        color: i <= currentStep ? null : Colors.grey,
+    return GlassCard(
+      padding: const EdgeInsets.fromLTRB(12, 14, 12, 12),
+      child: Row(
+        children: List.generate(labels.length, (index) {
+          final completed = index < currentStep;
+          final active = index == currentStep;
+          final color = active
+              ? AppColors.secondary
+              : completed
+                  ? AppColors.primary
+                  : (Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white24
+                      : AppColors.borderLight);
+          return Expanded(
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 250),
+                        width: active ? 30 : 26,
+                        height: active ? 30 : 26,
+                        decoration: BoxDecoration(
+                          color: active
+                              ? AppColors.secondary
+                              : completed
+                                  ? AppColors.primary
+                                  : Colors.white.withOpacity(0.7),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: active
+                                ? Colors.white
+                                : completed
+                                    ? AppColors.primary
+                                    : color,
+                            width: active ? 2 : 1,
+                          ),
+                          boxShadow: active
+                              ? [
+                                  BoxShadow(
+                                    color: AppColors.secondary.withOpacity(0.35),
+                                    blurRadius: 10,
+                                    spreadRadius: 1,
+                                  ),
+                                ]
+                              : null,
+                        ),
+                        child: Icon(
+                          completed
+                              ? Icons.check_rounded
+                              : active
+                                  ? Icons.near_me_rounded
+                                  : Icons.circle,
+                          size: active ? 15 : 11,
+                          color: completed || active
+                              ? Colors.white
+                              : AppColors.textHintLight,
+                        ),
                       ),
-                    ),
-                    if (i == currentStep) ...[
-                      const SizedBox(height: 2),
-                      const Text(
-                        'In progress right now',
+                      const SizedBox(height: 5),
+                      Text(
+                        labels[index],
+                        textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontSize: 11,
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 8.5,
+                          fontWeight:
+                              active ? FontWeight.w800 : FontWeight.w500,
+                          color: active
+                              ? AppColors.secondary
+                              : completed
+                                  ? AppColors.primary
+                                  : AppColors.textHintLight,
                         ),
                       ),
                     ],
-                  ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
-      ],
+                if (index < labels.length - 1)
+                  Container(
+                    height: 2,
+                    width: 10,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    color: index < currentStep
+                        ? AppColors.primary
+                        : color.withOpacity(0.5),
+                  ),
+              ],
+            ),
+          );
+        }),
+      ),
     );
   }
 

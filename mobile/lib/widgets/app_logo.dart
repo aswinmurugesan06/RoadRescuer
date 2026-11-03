@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 
-/// Official RoadRescue app logo widget.
-/// Renders the official approved logo image asset with strict aspect ratio preservation
-/// and responsive constraints.
+/// Official RoadRescue brand logo.
+///
+/// Three assets are used:
+/// - `logo_icon.png`       square mark for app bars
+/// - `logo_wordmark_dark.png` horizontal mark for light auth screens
+/// - `logo_stacked_light.png` stacked mark for the dark splash/welcome screens
 class AppLogo extends StatelessWidget {
   final double? width;
   final double? height;
   final BoxFit fit;
   final BorderRadius? borderRadius;
   final bool withShadow;
+  final String _asset;
 
   const AppLogo({
     super.key,
@@ -17,9 +21,9 @@ class AppLogo extends StatelessWidget {
     this.fit = BoxFit.contain,
     this.borderRadius,
     this.withShadow = false,
-  });
+  }) : _asset = 'assets/images/logo_stacked_dark.png';
 
-  /// Prominent centered logo for Splash screen (~180-220dp)
+  /// Prominent centered logo for the dark splash screen.
   const AppLogo.splash({
     super.key,
     this.width,
@@ -27,19 +31,19 @@ class AppLogo extends StatelessWidget {
     this.fit = BoxFit.contain,
     this.borderRadius,
     this.withShadow = true,
-  });
+  }) : _asset = 'assets/images/logo_stacked_light.png';
 
-  /// Medium logo for Auth screens (Login, Register, Welcome) (~56-72dp)
+  /// Horizontal wordmark for light auth screens.
   const AppLogo.authHeader({
     super.key,
     this.width,
-    this.height = 60,
+    this.height = 52,
     this.fit = BoxFit.contain,
     this.borderRadius,
     this.withShadow = false,
-  });
+  }) : _asset = 'assets/images/logo_wordmark_dark.png';
 
-  /// Small compact brand mark for AppBars / Headers (~28-36dp)
+  /// Compact square mark for app bars and headers.
   const AppLogo.appBar({
     super.key,
     this.width,
@@ -47,19 +51,19 @@ class AppLogo extends StatelessWidget {
     this.fit = BoxFit.contain,
     this.borderRadius,
     this.withShadow = false,
-  });
+  }) : _asset = 'assets/images/logo_icon.png';
 
   @override
   Widget build(BuildContext context) {
     Widget imageWidget = Image.asset(
-      'assets/images/logo.png',
+      _asset,
       width: width,
       height: height,
       fit: fit,
       filterQuality: FilterQuality.high,
       errorBuilder: (context, error, stackTrace) {
         return Image.asset(
-          'assets/images/logo.jpg',
+          'assets/images/logo.png',
           width: width,
           height: height,
           fit: fit,
@@ -80,9 +84,9 @@ class AppLogo extends StatelessWidget {
           borderRadius: borderRadius,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.3),
-              blurRadius: 24,
-              offset: const Offset(0, 8),
+              color: Colors.black.withValues(alpha: 0.28),
+              blurRadius: 28,
+              offset: const Offset(0, 10),
             ),
           ],
         ),

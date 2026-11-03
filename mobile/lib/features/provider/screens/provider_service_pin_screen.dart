@@ -66,103 +66,131 @@ class _ProviderServicePinScreenState extends State<ProviderServicePinScreen> {
         title: const Text('Verify Service Start'),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 72,
-                height: 72,
-                decoration: BoxDecoration(
-                  color: AppColors.secondary.withOpacity(0.12),
-                  shape: BoxShape.circle,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight - 48,
                 ),
-                child: const Icon(Icons.pin_outlined, size: 40, color: AppColors.secondary),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'Enter Customer PIN',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Ask the driver / customer for their 4-digit RoadRescue start code to begin work.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13, color: AppColors.textSecondaryLight),
-              ),
-              const SizedBox(height: 36),
-
-              // 4 digit inputs
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(4, (index) {
-                  return Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 6),
-                    width: 56,
-                    height: 64,
-                    decoration: BoxDecoration(
-                      color: isDark ? AppColors.cardDark : Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: _controllers[index].text.isNotEmpty
-                            ? AppColors.primary
-                            : (isDark ? AppColors.dividerDark : AppColors.dividerLight),
-                        width: 1.5,
-                      ),
-                    ),
-                    child: Center(
-                      child: TextField(
-                        controller: _controllers[index],
-                        focusNode: _focusNodes[index],
-                        keyboardType: TextInputType.number,
-                        textAlign: TextAlign.center,
-                        maxLength: 1,
-                        style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900),
-                        decoration: const InputDecoration(
-                          counterText: '',
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.zero,
+                child: IntrinsicHeight(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 72,
+                        height: 72,
+                        decoration: BoxDecoration(
+                          color: AppColors.secondary.withOpacity(0.12),
+                          shape: BoxShape.circle,
                         ),
-                        onChanged: (val) {
-                          if (val.isNotEmpty && index < 3) {
-                            _focusNodes[index + 1].requestFocus();
-                          } else if (val.isEmpty && index > 0) {
-                            _focusNodes[index - 1].requestFocus();
-                          }
+                        child: const Icon(Icons.pin_outlined,
+                            size: 40, color: AppColors.secondary),
+                      ),
+                      const SizedBox(height: 24),
+                      const Text(
+                        'Enter Customer PIN',
+                        style: TextStyle(
+                            fontSize: 22, fontWeight: FontWeight.w800),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Ask the driver / customer for their 4-digit RoadRescue start code to begin work.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textSecondaryLight),
+                      ),
+                      const SizedBox(height: 36),
+
+                      // 4 digit inputs
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(4, (index) {
+                            return Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 6),
+                              width: 56,
+                              height: 64,
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? AppColors.cardDark
+                                    : Colors.white,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: _controllers[index].text.isNotEmpty
+                                      ? AppColors.primary
+                                      : (isDark
+                                          ? AppColors.dividerDark
+                                          : AppColors.dividerLight),
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: Center(
+                                child: TextField(
+                                  controller: _controllers[index],
+                                  focusNode: _focusNodes[index],
+                                  keyboardType: TextInputType.number,
+                                  textAlign: TextAlign.center,
+                                  maxLength: 1,
+                                  style: const TextStyle(
+                                      fontSize: 26,
+                                      fontWeight: FontWeight.w900),
+                                  decoration: const InputDecoration(
+                                    counterText: '',
+                                    border: InputBorder.none,
+                                    contentPadding: EdgeInsets.zero,
+                                  ),
+                                  onChanged: (val) {
+                                    if (val.isNotEmpty && index < 3) {
+                                      _focusNodes[index + 1].requestFocus();
+                                    } else if (val.isEmpty && index > 0) {
+                                      _focusNodes[index - 1].requestFocus();
+                                    }
+                                    setState(() {});
+                                  },
+                                ),
+                              ),
+                            );
+                          }),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Mock quick fill button for testing convenience
+                      TextButton.icon(
+                        onPressed: () {
+                          _controllers[0].text = '4';
+                          _controllers[1].text = '8';
+                          _controllers[2].text = '2';
+                          _controllers[3].text = '9';
                           setState(() {});
                         },
+                        icon: const Icon(Icons.flash_on_rounded, size: 16),
+                        label: const Text(
+                          'Auto-fill Customer PIN (4829)',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    ),
-                  );
-                }),
-              ),
-              const SizedBox(height: 24),
+                      const Spacer(),
 
-              // Mock quick fill button for testing convenience
-              TextButton.icon(
-                onPressed: () {
-                  _controllers[0].text = '4';
-                  _controllers[1].text = '8';
-                  _controllers[2].text = '2';
-                  _controllers[3].text = '9';
-                  setState(() {});
-                },
-                icon: const Icon(Icons.flash_on_rounded, size: 16),
-                label: const Text('Auto-fill Customer PIN (4829)'),
+                      // Verify button
+                      RRButton(
+                        label: 'Confirm PIN & Start Repair',
+                        icon: Icons.check_circle_rounded,
+                        isLoading: _isVerifying,
+                        onPressed: _verifyPin,
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              const Spacer(),
-
-              // Verify button
-              RRButton(
-                label: 'Confirm PIN & Start Repair',
-                icon: Icons.check_circle_rounded,
-                isLoading: _isVerifying,
-                onPressed: _verifyPin,
-              ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );

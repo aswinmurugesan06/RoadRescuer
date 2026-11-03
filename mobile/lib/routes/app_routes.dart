@@ -23,6 +23,7 @@ import '../models/bill_model.dart';
 import '../features/assistance/screens/request_assistance_screen.dart';
 import '../features/assistance/screens/select_problem_screen.dart';
 import '../features/assistance/screens/location_confirmation_screen.dart';
+import '../features/assistance/screens/cost_estimation_screen.dart';
 import '../features/assistance/screens/nearby_providers_screen.dart';
 import '../features/assistance/screens/active_assistance_screen.dart';
 import '../features/assistance/screens/service_verification_pin_screen.dart';
@@ -48,9 +49,6 @@ import '../features/provider/screens/provider_navigation_screen.dart';
 import '../features/provider/screens/provider_service_pin_screen.dart';
 import '../features/provider/screens/create_bill_screen.dart';
 
-// Admin
-import '../features/admin/screens/admin_dashboard_screen.dart';
-
 class AppRoutes {
   AppRoutes._();
 
@@ -69,6 +67,7 @@ class AppRoutes {
   static const String vehicleDetails = '/vehicle-details';
 
   static const String requestAssistance = '/request-assistance';
+  static const String costEstimator = '/cost-estimator';
   static const String selectProblem = '/select-problem';
   static const String locationConfirm = '/location-confirm';
   static const String nearbyProviders = '/nearby-providers';
@@ -92,7 +91,6 @@ class AppRoutes {
   static const String providerNavigation = '/provider/navigation';
   static const String providerServicePin = '/provider/service-pin';
   static const String createBill = '/create-bill';
-  static const String adminDashboard = '/admin/dashboard';
 
   // ── Route Generator ──────────────────────────────────────────────
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -125,11 +123,19 @@ class AppRoutes {
     }
 
     if (name == requestAssistance) return _slide(const RequestAssistanceScreen());
+    if (name == costEstimator) {
+      final args = settings.arguments as Map<String, dynamic>?;
+      return _slide(CostEstimationScreen(
+        vehicle: args?['vehicle'] as VehicleModel?,
+        initialServiceType: args?['serviceType'] as String?,
+      ));
+    }
     if (name == selectProblem) {
       final args = settings.arguments as Map<String, dynamic>?;
       return _slide(SelectProblemScreen(
         serviceType: args?['serviceType'] ?? 'Mechanic',
         vehicle: args?['vehicle'] as VehicleModel?,
+        estimatedAmount: (args?['estimatedAmount'] as num?)?.toDouble(),
       ));
     }
     if (name == locationConfirm) {
@@ -138,6 +144,7 @@ class AppRoutes {
         serviceType: args?['serviceType'] ?? '',
         problem: args?['problem'] ?? '',
         vehicle: args?['vehicle'] as VehicleModel?,
+        estimatedAmount: (args?['estimatedAmount'] as num?)?.toDouble(),
       ));
     }
     if (name == nearbyProviders) {
@@ -226,8 +233,6 @@ class AppRoutes {
         request: args?['request'] as ServiceRequestModel?,
       ));
     }
-    if (name == adminDashboard) return _fade(const AdminDashboardScreen());
-
     return _slide(_NotFoundScreen(routeName: name ?? ''));
   }
 

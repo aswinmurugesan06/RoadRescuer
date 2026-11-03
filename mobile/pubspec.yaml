@@ -19,7 +19,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: '>=2.19.2 <3.0.0'
+  sdk: '>=3.0.0 <4.0.0'
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -36,17 +36,29 @@ dependencies:
   cupertino_icons: ^1.0.2
 
   # HTTP client for backend API calls (Dart 2.x compatible)
-  http: ^0.13.6
+  http: ^1.6.0
 
   # Local storage for auth token (Dart 2.x compatible)
   shared_preferences: ^2.0.20
   geolocator: ^11.1.0
-  maplibre_gl: ^0.16.0
+  maplibre_gl: ^0.27.1
   socket_io_client: ^2.0.3+1
+  google_fonts: ^6.2.1
+  google_sign_in: ^6.2.1
+  url_launcher: ^6.3.1
+  firebase_core: ^3.15.2
+  firebase_auth: ^5.7.0
+  cloud_firestore: ^5.6.12
+  firebase_messaging: ^15.2.10
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_web_plugins:
+    sdk: flutter
+  cloud_firestore_web: ^4.4.12
+  firebase_auth_web: ^5.15.3
+  firebase_core_web: ^2.24.1
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

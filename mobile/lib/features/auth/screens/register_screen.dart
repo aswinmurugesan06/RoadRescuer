@@ -26,6 +26,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _confirmCtrl = TextEditingController();
   final _garageNameCtrl = TextEditingController();
   bool _isLoading = false;
+  bool _googleLoading = false;
   late String _role;
   String _category = 'MECHANIC';
 
@@ -33,13 +34,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void initState() {
     super.initState();
     final init = (widget.initialRole ?? 'customer').toLowerCase();
-    if (init == 'provider' || init == 'service provider') {
-      _role = 'provider';
-    } else if (init == 'admin' || init == 'platform admin') {
-      _role = 'admin';
-    } else {
-      _role = 'customer';
-    }
+    _role = (init == 'provider' || init == 'service provider')
+        ? 'provider'
+        : 'customer';
   }
 
   void _register() async {
@@ -48,8 +45,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     try {
       final isProvider = _role == 'provider';
-      final isAdmin = _role == 'admin';
-      final targetRole = isAdmin ? 'ADMIN' : (isProvider ? 'PROVIDER' : 'CUSTOMER');
+      final targetRole = isProvider ? 'PROVIDER' : 'CUSTOMER';
 
       final res = await AuthService.register(
         name: _nameCtrl.text.trim(),
@@ -72,8 +68,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       if (role == 'PROVIDER') {
         Navigator.pushNamedAndRemoveUntil(context, AppRoutes.provider, (r) => false);
-      } else if (role == 'ADMIN') {
-        Navigator.pushNamedAndRemoveUntil(context, AppRoutes.adminDashboard, (r) => false);
       } else {
         Navigator.pushNamedAndRemoveUntil(context, AppRoutes.customer, (r) => false);
       }
@@ -98,6 +92,52 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
+  Future<void> _googleSignUp() async {
+    setState(() => _googleLoading = true);
+    try {
+      final isProvider = _role == 'provider';
+      final targetRole = isProvider ? 'PROVIDER' : 'CUSTOMER';
+      final res = await AuthService.signInWithGoogle(
+        role: targetRole,
+        mobile: _phoneCtrl.text.trim().isEmpty ? null : _phoneCtrl.text.trim(),
+        providerCategory: isProvider ? _category : null,
+        garageName: isProvider && _garageNameCtrl.text.trim().isNotEmpty
+            ? _garageNameCtrl.text.trim()
+            : null,
+      );
+
+      if (!mounted) return;
+      final user = res['user'] as Map<String, dynamic>?;
+      final role = (user?['role'] as String? ?? targetRole).toUpperCase();
+
+      if (role == 'PROVIDER') {
+        Navigator.pushNamedAndRemoveUntil(
+            context, AppRoutes.provider, (r) => false);
+      } else {
+        Navigator.pushNamedAndRemoveUntil(
+            context, AppRoutes.customer, (r) => false);
+      }
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Google sign-up failed: $e'),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _googleLoading = false);
+    }
+  }
+
   @override
   void dispose() {
     _nameCtrl.dispose();
@@ -112,18 +152,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     final isProvider = _role == 'provider';
-    final isAdmin = _role == 'admin';
     final String title;
     final String subtitle;
     final Color accentColor;
     final String roleLabel;
 
-    if (isAdmin) {
-      title = 'Create Admin Account';
-      subtitle = 'Join RoadRescue as a platform administrator';
-      accentColor = const Color(0xFF6366F1);
-      roleLabel = 'Platform Admin';
-    } else if (isProvider) {
+    if (isProvider) {
       title = 'Create Provider Account';
       subtitle = 'Join RoadRescue as a verified service partner';
       accentColor = AppColors.secondary;
@@ -207,23 +241,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         onTap: () => setState(() => _role = 'provider'),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _RoleOption(
-                        label: 'Platform Admin',
-                        icon: '🛡️',
-                        selected: _role == 'admin',
-                        activeColor: const Color(0xFF6366F1),
-                        onTap: () => setState(() => _role = 'admin'),
-                      ),
-                    ),
                   ],
                 ),
                 const SizedBox(height: 24),
                 RRTextField(
                   label: isProvider
                       ? 'Contact Person / Owner Name'
-                      : (isAdmin ? 'Admin Name' : 'Full Name'),
+                      : 'Full Name',
                   prefixIcon: Icons.person_outline_rounded,
                   controller: _nameCtrl,
                   validator: Validators.name,
@@ -310,11 +334,65 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 24),
                 RRButton(
-                  label: isAdmin
-                      ? 'Register as Admin'
-                      : (isProvider ? 'Register as Provider' : 'Create Account'),
+                  label: isProvider ? 'Register as Provider' : 'Create Account',
                   onPressed: _register,
                   isLoading: _isLoading,
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    const Expanded(child: Divider()),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Text(
+                        'OR',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.8,
+                          color: AppColors.textSecondaryLight,
+                        ),
+                      ),
+                    ),
+                    const Expanded(child: Divider()),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: _googleLoading ? null : _googleSignUp,
+                    icon: Container(
+                      width: 22,
+                      height: 22,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.borderLight),
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'G',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w900,
+                            color: Color(0xFF4285F4),
+                          ),
+                        ),
+                      ),
+                    ),
+                    label: Text(
+                      _googleLoading
+                          ? 'Connecting to Google…'
+                          : 'Sign up with Google',
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(0, 52),
+                      backgroundColor: Colors.white,
+                      foregroundColor: AppColors.textPrimaryLight,
+                      side: const BorderSide(color: AppColors.borderLight),
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Center(

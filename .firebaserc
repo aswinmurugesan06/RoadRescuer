@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "road-rescuer"
+  },
+  "targets": {
+    "road-rescuer": {
+      "hosting": {
+        "admin": [
+          "road-rescuer-admin"
+        ]
+      }
+    }
+  }
+}

@@ -55,6 +55,8 @@ class _NearbyProvidersScreenState extends State<NearbyProvidersScreen> {
   void _selectProvider(ProviderModel provider) {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -124,14 +126,31 @@ class _NearbyProvidersScreenState extends State<NearbyProvidersScreen> {
                     color: isDark ? AppColors.surfaceDark : Colors.white,
                     child: Row(
                       children: [
-                        Text(
-                          '${_sortedProviders.length} providers found',
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                        Expanded(
+                          child: Text(
+                            '${_sortedProviders.length} providers found',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
-                        const Spacer(),
-                        _buildFilterChip('Nearest'),
                         const SizedBox(width: 8),
-                        _buildFilterChip('Highest Rated'),
+                        Flexible(
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            reverse: true,
+                            child: Row(
+                              children: [
+                                _buildFilterChip('Nearest'),
+                                const SizedBox(width: 8),
+                                _buildFilterChip('Highest Rated'),
+                              ],
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -275,25 +294,45 @@ class _ProviderCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  const Icon(Icons.near_me_rounded, size: 16, color: AppColors.primary),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${provider.distanceKm} km away',
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
-                  ),
-                  const SizedBox(width: 10),
-                  const Text('•', style: TextStyle(color: Colors.grey)),
-                  const SizedBox(width: 10),
-                  const Icon(Icons.schedule_rounded, size: 16, color: AppColors.success),
-                  const SizedBox(width: 4),
-                  Text(
-                    'ETA ${provider.eta}',
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.success),
-                  ),
-                ],
+              Expanded(
+                child: Row(
+                  children: [
+                    const Icon(Icons.near_me_rounded,
+                        size: 16, color: AppColors.primary),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        '${provider.distanceKm} km away',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text('•', style: TextStyle(color: Colors.grey)),
+                    const SizedBox(width: 8),
+                    const Icon(Icons.schedule_rounded,
+                        size: 16, color: AppColors.success),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        'ETA ${provider.eta}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.success,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               ElevatedButton(
                 onPressed: onTap,
                 style: ElevatedButton.styleFrom(
@@ -327,73 +366,110 @@ class _ProviderConfirmSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey.withOpacity(0.4),
-                borderRadius: BorderRadius.circular(2),
+    return SafeArea(
+      top: false,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.withOpacity(0.4),
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 20),
-          const Text(
-            'Confirm Assistance Request',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            'The provider will be notified immediately and dispatched.',
-            style: TextStyle(fontSize: 13, color: AppColors.textSecondaryLight),
-          ),
-          const SizedBox(height: 20),
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.06),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+            const SizedBox(height: 20),
+            const Text(
+              'Confirm Assistance Request',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
             ),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    const Icon(Icons.person_pin_rounded, color: AppColors.primary, size: 20),
-                    const SizedBox(width: 8),
-                    Text(provider.name, style: const TextStyle(fontWeight: FontWeight.w700)),
-                    const Spacer(),
-                    Text('ETA: ${provider.eta}', style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.success)),
-                  ],
+            const SizedBox(height: 6),
+            const Text(
+              'The provider will be notified immediately and dispatched.',
+              style: TextStyle(
+                  fontSize: 13, color: AppColors.textSecondaryLight),
+            ),
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.06),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.person_pin_rounded,
+                          color: AppColors.primary, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          provider.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'ETA: ${provider.eta}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.success,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.build_circle_outlined,
+                          size: 18, color: Colors.grey),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '$serviceType • $problem',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: onConfirm,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  minimumSize: const Size(0, 52),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Icon(Icons.build_circle_outlined, size: 18, color: Colors.grey),
-                    const SizedBox(width: 8),
-                    Text('$serviceType • $problem', style: const TextStyle(fontSize: 12)),
-                  ],
+                child: const Text(
+                  'Dispatch Provider Now',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                 ),
-              ],
+              ),
             ),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: onConfirm,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              minimumSize: const Size(double.infinity, 52),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            child: const Text('Dispatch Provider Now', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

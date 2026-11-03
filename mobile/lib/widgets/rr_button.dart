@@ -83,13 +83,18 @@ class RRButton extends StatelessWidget {
             Icon(icon, size: 20, color: _getFgColor()),
             const SizedBox(width: 8),
           ],
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: effectiveFontSize,
-              fontWeight: FontWeight.w600,
-              color: _getFgColor(),
-              letterSpacing: 0.2,
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: effectiveFontSize,
+                fontWeight: FontWeight.w600,
+                color: _getFgColor(),
+                letterSpacing: 0.2,
+              ),
             ),
           ),
         ],

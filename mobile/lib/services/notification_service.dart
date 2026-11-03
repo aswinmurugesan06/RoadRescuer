@@ -1,6 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'api_client.dart';
 import '../routes/app_routes.dart';
 
 /// Notification Service for RoadRescue.
@@ -32,37 +33,51 @@ class NotificationService {
     }
   }
 
-  /// Register an FCM device token with the backend.
-  Future<bool> registerTokenWithBackend(String token, {String deviceType = 'ANDROID'}) async {
+  /// Register an FCM device token in Firestore.
+  ///
+  /// Kept under the original name so existing callers continue to work.
+  Future<bool> registerTokenWithBackend(
+    String token, {
+    String deviceType = 'ANDROID',
+  }) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return false;
+
     try {
       _currentToken = token;
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_fcmTokenKey, token);
 
-      await ApiClient.post('/notifications/tokens', {
+      await FirebaseFirestore.instance
+          .collection('deviceTokens')
+          .doc(token)
+          .set({
+        'userId': user.uid,
         'token': token,
-        'deviceType': deviceType,
-      });
+        'deviceType': deviceType.toUpperCase(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
       return true;
-    } on ApiException catch (_) {
-      return false;
     } catch (_) {
       return false;
     }
   }
 
-  /// Remove an FCM device token from backend on logout.
+  /// Remove an FCM device token from Firestore on logout.
   Future<void> removeTokenFromBackend([String? token]) async {
     final tokenToRemove = token ?? _currentToken;
     if (tokenToRemove == null || tokenToRemove.isEmpty) return;
 
     try {
-      await ApiClient.delete('/notifications/tokens/$tokenToRemove');
+      await FirebaseFirestore.instance
+          .collection('deviceTokens')
+          .doc(tokenToRemove)
+          .delete();
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_fcmTokenKey);
       _currentToken = null;
     } catch (_) {
-      // Ignore network errors on logout
+      // Ignore cleanup errors on logout.
     }
   }
 

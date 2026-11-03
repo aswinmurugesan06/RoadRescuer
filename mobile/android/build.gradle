@@ -1,13 +1,12 @@
 buildscript {
-    ext.kotlin_version = '1.7.10'
     repositories {
         google()
         mavenCentral()
     }
-
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.2.0'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        // Makes the Google Services plugin available to the conditional
+        // `apply plugin` in app/build.gradle.
+        classpath 'com.google.gms:google-services:4.4.4'
     }
 }
 
@@ -15,17 +14,45 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        // Required by maplibre_gl's Android dependency (VietMap maps SDK).
+        maven { url 'https://jitpack.io' }
     }
 }
 
-rootProject.buildDir = '../build'
+rootProject.buildDir = "../build"
+
+// AGP 8 requires every module to declare a `namespace`. Some older plugins
+// (e.g. maplibre_gl 0.16.0) predate this requirement. Hook the Android library
+// plugin and inject a namespace *during* evaluation (before it is finalized).
+subprojects { project ->
+    project.pluginManager.withPlugin("com.android.library") {
+        def androidExt = project.extensions.findByName("android")
+        if (androidExt != null && androidExt.namespace == null) {
+            def ns = project.group ? project.group.toString() : null
+            def manifestFile = project.file("src/main/AndroidManifest.xml")
+            if (manifestFile.exists()) {
+                def factory = javax.xml.parsers.DocumentBuilderFactory.newInstance()
+                factory.setNamespaceAware(true)
+                def doc = factory.newDocumentBuilder().parse(manifestFile)
+                def pkg = doc.documentElement.getAttribute("package")
+                if (pkg) {
+                    ns = pkg
+                }
+            }
+            if (ns) {
+                androidExt.namespace = ns
+            }
+        }
+    }
+}
+
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
 }
 subprojects {
-    project.evaluationDependsOn(':app')
+    project.evaluationDependsOn(":app")
 }
 
-task clean(type: Delete) {
-    delete rootProject.buildDir
+tasks.register("clean", Delete) {
+    delete rootProject.layout.buildDirectory
 }

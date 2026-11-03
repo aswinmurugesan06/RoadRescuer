@@ -1,83 +1,142 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../models/bill_model.dart';
 import 'api_client.dart';
+import 'firebase/firestore_helpers.dart';
 
-/// Flutter service for billing and payment API interactions.
+/// Firestore-backed billing and payment service.
 ///
-/// All financial amounts come from the backend — the app never
-/// passes or trusts a client-calculated amount to the payment API.
+/// Bills live in `bills`, payments in `payments`. Financial totals are
+/// calculated here from the bill items (there is no separate backend).
 class BillingService {
-  // ── Bill Retrieval ──────────────────────────────────────────────────────────
+  static FirebaseFirestore get _db => FirebaseFirestore.instance;
+  static const double _taxRate = 0.18;
 
-  /// Fetch the bill associated with a service request.
-  /// Returns null if no bill has been created yet.
+  // ── Bill Retrieval ────────────────────────────────────────────────────
+
   static Future<BillModel?> getBillByRequestId(String requestId) async {
-    try {
-      final res = await ApiClient.get('/bills/request/$requestId');
-      final data = res['data'] as Map<String, dynamic>?;
-      return data != null ? BillModel.fromJson(data) : null;
-    } on ApiException catch (e) {
-      if (e.statusCode == 404) return null;
-      rethrow;
-    }
+    final snapshot = await _db
+        .collection('bills')
+        .where('requestId', isEqualTo: requestId)
+        .limit(1)
+        .get();
+    if (snapshot.docs.isEmpty) return null;
+    return BillModel.fromJson(firestoreQueryDocToJson(snapshot.docs.first));
   }
 
-  /// Fetch a bill by its own ID.
   static Future<BillModel> getBillById(String billId) async {
-    final res = await ApiClient.get('/bills/$billId');
-    return BillModel.fromJson(res['data'] as Map<String, dynamic>);
+    final doc = await _db.collection('bills').doc(billId).get();
+    if (!doc.exists) throw notFound('Bill');
+    return BillModel.fromJson(firestoreDocToJson(doc));
   }
 
-  // ── Bill Status Updates ─────────────────────────────────────────────────────
+  // ── Bill Status Updates ───────────────────────────────────────────────
 
-  /// Customer approves the bill.
   static Future<BillModel> approveBill(String billId) async {
-    final res = await ApiClient.patch(
-      '/bills/$billId/status',
-      body: {'status': 'APPROVED'},
-    );
-    return BillModel.fromJson(res['data'] as Map<String, dynamic>);
+    await _db.collection('bills').doc(billId).update({
+      'status': 'APPROVED',
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+    return getBillById(billId);
   }
 
-  /// Customer rejects the bill with a required [reason].
   static Future<BillModel> rejectBill(String billId, String reason) async {
-    final res = await ApiClient.patch(
-      '/bills/$billId/status',
-      body: {'status': 'REJECTED', 'rejectionReason': reason},
-    );
-    return BillModel.fromJson(res['data'] as Map<String, dynamic>);
+    await _db.collection('bills').doc(billId).update({
+      'status': 'REJECTED',
+      'rejectionReason': reason,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+    return getBillById(billId);
   }
 
-  // ── Provider — Create/Update Bill ───────────────────────────────────────────
+  // ── Provider — Create/Update Bill ─────────────────────────────────────
 
-  /// Provider creates or updates the invoice for a service request.
-  ///
-  /// [items] each must have 'description', 'quantity', and 'unitPrice'.
+  /// Provider creates the invoice for a service request.
   static Future<BillModel> createBill({
     required String requestId,
     required List<Map<String, dynamic>> items,
     String? notes,
   }) async {
-    final body = <String, dynamic>{
+    final uid = currentUid;
+    final provider = await currentProfileJson();
+    if (provider == null) throw notFound('Provider profile');
+
+    final requestDoc =
+        await _db.collection('serviceRequests').doc(requestId).get();
+    if (!requestDoc.exists) throw notFound('Service request');
+    final request = requestDoc.data() ?? <String, dynamic>{};
+
+    final customerId = request['customerId'] as String? ?? '';
+    final customer = customerId.isEmpty ? null : await userJson(customerId);
+
+    final normalizedItems = <Map<String, dynamic>>[];
+    var subtotal = 0.0;
+    for (var i = 0; i < items.length; i++) {
+      final item = items[i];
+      final quantity = (item['quantity'] as num?)?.toInt() ?? 1;
+      final unitPrice = (item['unitPrice'] as num?)?.toDouble() ?? 0.0;
+      final total = quantity * unitPrice;
+      subtotal += total;
+      normalizedItems.add({
+        'id': 'item_$i',
+        'description': item['description'] ?? '',
+        'quantity': quantity,
+        'unitPrice': unitPrice,
+        'total': total,
+      });
+    }
+
+    final taxAmount = subtotal * _taxRate;
+    final grandTotal = subtotal + taxAmount;
+    final doc = _db.collection('bills').doc();
+    final now = FieldValue.serverTimestamp();
+
+    await doc.set({
       'requestId': requestId,
-      'items': items,
+      'providerId': uid,
+      'customerId': customerId,
+      'status': 'PENDING',
+      'items': normalizedItems,
+      'subtotal': subtotal,
+      'taxRate': _taxRate,
+      'taxAmount': taxAmount,
+      'grandTotal': grandTotal,
       if (notes != null && notes.isNotEmpty) 'notes': notes,
-    };
-    final res = await ApiClient.post('/bills', body);
-    return BillModel.fromJson(res['data'] as Map<String, dynamic>);
-  }
-
-  // ── Razorpay Gateway Integration ────────────────────────────────────────────
-
-  /// Create Razorpay payment order on the server.
-  /// Amount is strictly calculated on the server from DB.
-  static Future<Map<String, dynamic>> createOrder(String billId) async {
-    final res = await ApiClient.post('/payments/order', {
-      'billId': billId,
+      'provider': {
+        'id': uid,
+        'name': provider['name'] ?? 'Service Provider',
+        'mobile': provider['mobile'] ?? '',
+      },
+      'customer': {
+        'id': customerId,
+        'name': customer?['name'] ?? request['customerName'] ?? 'Customer',
+        'mobile': customer?['mobile'] ?? request['customerMobile'] ?? '',
+      },
+      'createdAt': now,
+      'updatedAt': now,
     });
-    return res['data'] as Map<String, dynamic>;
+
+    await requestDoc.reference.update({
+      'finalAmount': grandTotal,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+
+    return getBillById(doc.id);
   }
 
-  /// Verify Razorpay payment signature on the server.
+  // ── Payment gateway (client-side simulation) ──────────────────────────
+
+  /// Returns a local order id. Firestore records the actual payment.
+  static Future<Map<String, dynamic>> createOrder(String billId) async {
+    final bill = await getBillById(billId);
+    return {
+      'orderId': 'firestore_${billId}_${DateTime.now().millisecondsSinceEpoch}',
+      'amount': bill.grandTotal,
+      'currency': 'INR',
+    };
+  }
+
+  /// Record a completed payment and mark the bill paid.
   static Future<Map<String, dynamic>> verifyPayment({
     required String billId,
     required String orderId,
@@ -85,55 +144,188 @@ class BillingService {
     required String signature,
     String method = 'UPI',
   }) async {
-    final res = await ApiClient.post('/payments/verify', {
-      'billId': billId,
-      'razorpay_order_id': orderId,
-      'razorpay_payment_id': paymentId,
-      'razorpay_signature': signature,
-      'method': method,
-    });
-    return res['data'] as Map<String, dynamic>;
+    return processPayment(billId: billId, method: method);
   }
 
-  // ── Payment ─────────────────────────────────────────────────────────────────
-
-  /// Customer pays the bill directly (e.g. Cash on service).
-  /// [method] must be one of: UPI, CARD, CASH, NET_BANKING.
-  /// Amount is taken from the server — never pass it from the client.
+  /// Customer pays the bill.
   static Future<Map<String, dynamic>> processPayment({
     required String billId,
     required String method,
   }) async {
-    final res = await ApiClient.post('/payments', {
-      'billId': billId,
-      'method': method,
+    final bill = await getBillById(billId);
+    if (bill.status == 'PAID') {
+      throw const ApiException(
+        statusCode: 409,
+        message: 'This bill has already been paid.',
+      );
+    }
+
+    final uid = currentUid;
+    final customer = await currentProfileJson();
+    final requestDoc =
+        await _db.collection('serviceRequests').doc(bill.requestId).get();
+    final request = requestDoc.data() ?? <String, dynamic>{};
+    final providerId = request['providerId'] as String? ?? '';
+    final provider = providerId.isEmpty ? null : await userJson(providerId);
+
+    final paymentDoc = _db.collection('payments').doc();
+    final now = FieldValue.serverTimestamp();
+    final transactionId =
+        'TXN${DateTime.now().millisecondsSinceEpoch}${paymentDoc.id.substring(0, 4)}';
+    final receiptNumber =
+        'RR-${DateTime.now().year}-${paymentDoc.id.substring(0, 6).toUpperCase()}';
+
+    await _db.runTransaction((transaction) async {
+      transaction.set(paymentDoc, {
+        'billId': billId,
+        'requestId': bill.requestId,
+        'customerId': uid,
+        'providerId': providerId,
+        'amount': bill.grandTotal,
+        'method': method.toUpperCase(),
+        'status': 'COMPLETED',
+        'transactionId': transactionId,
+        'receiptNumber': receiptNumber,
+        'paidAt': now,
+        'customerName': customer?['name'] ?? bill.customer?.name ?? 'Customer',
+        'providerName':
+            provider?['name'] ?? bill.provider?.name ?? 'Service Provider',
+        'vehicleModel': request['vehicleModel'] ?? '',
+        'vehiclePlate': request['vehiclePlate'] ?? '',
+        'location': request['customerAddress'] ??
+            'GPS: ${(request['customerLatitude'] as num?)?.toStringAsFixed(4) ?? ''}, '
+                '${(request['customerLongitude'] as num?)?.toStringAsFixed(4) ?? ''}',
+        'serviceType': request['serviceType'] ?? 'Roadside Assistance',
+        'category': request['category'] ?? 'MECHANIC',
+        'createdAt': now,
+        'updatedAt': now,
+      });
+      transaction.update(_db.collection('bills').doc(billId), {
+        'status': 'PAID',
+        'updatedAt': now,
+      });
     });
-    return res['data'] as Map<String, dynamic>;
+
+    final payment = await paymentDoc.get();
+    return {
+      'payment': firestoreDocToJson(payment),
+      'bill': bill.toJson(),
+    };
   }
 
-  // ── Receipts ────────────────────────────────────────────────────────────────
+  // ── Receipts ──────────────────────────────────────────────────────────
 
-  /// Get the digital receipt for a completed payment.
   static Future<ReceiptModel> getReceiptByPaymentId(String paymentId) async {
-    final res = await ApiClient.get('/payments/$paymentId/receipt');
-    return ReceiptModel.fromJson(res['data'] as Map<String, dynamic>);
+    final paymentDoc = await _db.collection('payments').doc(paymentId).get();
+    if (!paymentDoc.exists) throw notFound('Payment');
+    return _receiptFromPayment(firestoreDocToJson(paymentDoc));
   }
 
-  /// Get the digital receipt for a completed payment via request ID.
   static Future<ReceiptModel> getReceiptByRequestId(String requestId) async {
-    final res = await ApiClient.get('/payments/request/$requestId/receipt');
-    return ReceiptModel.fromJson(res['data'] as Map<String, dynamic>);
+    final snapshot = await _db
+        .collection('payments')
+        .where('requestId', isEqualTo: requestId)
+        .limit(1)
+        .get();
+    if (snapshot.docs.isEmpty) throw notFound('Receipt');
+    return _receiptFromPayment(firestoreQueryDocToJson(snapshot.docs.first));
   }
 
-  // ── Payment History ─────────────────────────────────────────────────────────
+  static Future<ReceiptModel> _receiptFromPayment(
+    Map<String, dynamic> payment,
+  ) async {
+    final billId = payment['billId'] as String? ?? '';
+    if (billId.isEmpty) throw notFound('Bill');
 
-  /// Fetch payment history for the authenticated user from the database.
+    final billDoc = await _db.collection('bills').doc(billId).get();
+    if (!billDoc.exists) throw notFound('Bill');
+    final bill = firestoreDocToJson(billDoc);
+
+    final requestId = payment['requestId'] as String? ?? '';
+    Map<String, dynamic> request = <String, dynamic>{};
+    if (requestId.isNotEmpty) {
+      final requestDoc =
+          await _db.collection('serviceRequests').doc(requestId).get();
+      if (requestDoc.exists) request = firestoreDocToJson(requestDoc);
+    }
+
+    return ReceiptModel.fromJson({
+      'receiptNumber': payment['receiptNumber'] ?? '',
+      'transactionId': payment['transactionId'] ?? '',
+      'paidAt': payment['paidAt'] ?? payment['createdAt'],
+      'amount': payment['amount'] ?? bill['grandTotal'] ?? 0,
+      'method': payment['method'] ?? 'UPI',
+      'requestId': requestId,
+      'serviceType': payment['serviceType'] ?? request['serviceType'],
+      'location': payment['location'] ?? request['customerAddress'],
+      'subtotal': bill['subtotal'] ?? 0,
+      'taxRate': bill['taxRate'] ?? _taxRate,
+      'taxAmount': bill['taxAmount'] ?? 0,
+      'grandTotal': bill['grandTotal'] ?? 0,
+      'items': bill['items'] ?? [],
+      'notes': bill['notes'],
+      'customer': bill['customer'],
+      'provider': bill['provider'],
+      'vehicle': {
+        'model': request['vehicleModel'] ?? payment['vehicleModel'] ?? '',
+        'plate': request['vehiclePlate'] ?? payment['vehiclePlate'] ?? '',
+      },
+    });
+  }
+
+  // ── Payment History ───────────────────────────────────────────────────
+
   static Future<List<PaymentHistoryItem>> getMyPayments() async {
-    final res = await ApiClient.get('/payments/my-payments');
-    final rawList = res['data'] as List<dynamic>? ?? [];
-    return rawList
-        .map((e) => PaymentHistoryItem.fromJson(e as Map<String, dynamic>))
-        .toList();
+    final uid = currentUid;
+    final snapshot = await _db
+        .collection('payments')
+        .where('customerId', isEqualTo: uid)
+        .limit(100)
+        .get();
+
+    final payments = snapshot.docs.map(firestoreQueryDocToJson).toList();
+    payments.sort((a, b) {
+      final aDate = DateTime.tryParse(
+              (a['paidAt'] ?? a['createdAt'])?.toString() ?? '') ??
+          DateTime.fromMillisecondsSinceEpoch(0);
+      final bDate = DateTime.tryParse(
+              (b['paidAt'] ?? b['createdAt'])?.toString() ?? '') ??
+          DateTime.fromMillisecondsSinceEpoch(0);
+      return bDate.compareTo(aDate);
+    });
+
+    return payments.map((payment) {
+      return PaymentHistoryItem.fromJson({
+        ...payment,
+        'paymentId': payment['id'],
+        'service': payment['serviceType'],
+      });
+    }).toList();
+  }
+}
+
+extension on BillModel {
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'requestId': requestId,
+      'status': status,
+      'items': items
+          .map((item) => {
+                'id': item.id,
+                'description': item.description,
+                'quantity': item.quantity,
+                'unitPrice': item.unitPrice,
+                'total': item.total,
+              })
+          .toList(),
+      'subtotal': subtotal,
+      'taxRate': taxRate,
+      'taxAmount': taxAmount,
+      'grandTotal': grandTotal,
+      'notes': notes,
+      'rejectionReason': rejectionReason,
+    };
   }
 }
 

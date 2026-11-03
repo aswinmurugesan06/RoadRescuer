@@ -3,6 +3,7 @@ import '../../../routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/bill_model.dart';
 import '../../../services/billing_service.dart';
+import '../../../widgets/glass.dart';
 import '../../../widgets/rr_button.dart';
 import '../../../widgets/rr_card.dart';
 import '../../../widgets/rr_text_field.dart';
@@ -133,16 +134,17 @@ class _PaymentScreenState extends State<PaymentScreen> {
       appBar: AppBar(
         title: const Text('Select Payment Method'),
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Amount banner
+      body: GlassBackground(
+        child: SafeArea(
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Amount banner
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(20),
@@ -342,7 +344,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildMethodTile({

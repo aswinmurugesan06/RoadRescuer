@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0045d1" />
+  <title>RoadRescue Platform Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#0045d1',
+            'primary-container': '#1a5cff',
+            'primary-fixed': '#dce1ff',
+            'primary-fixed-dim': '#b6c4ff',
+            secondary: '#b42901',
+            'secondary-container': '#fe5d35',
+            'secondary-fixed': '#ffdad2',
+            'secondary-fixed-dim': '#ffb4a2',
+            'on-secondary-fixed': '#3c0700',
+            'on-secondary-fixed-variant': '#8a1d00',
+            tertiary: '#714e00',
+            'tertiary-container': '#916400',
+            'tertiary-fixed': '#ffdeac',
+            'tertiary-fixed-dim': '#ffba38',
+            surface: '#faf8ff',
+            'surface-container-lowest': '#ffffff',
+            'surface-container-low': '#f2f3ff',
+            'surface-container': '#e9edff',
+            'surface-container-high': '#e1e8ff',
+            'surface-container-highest': '#dce2f9',
+            'on-surface': '#141b2c',
+            'on-surface-variant': '#434656',
+            outline: '#737688',
+            'outline-variant': '#c3c5d9',
+            background: '#faf8ff',
+          },
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'sans-serif'],
+          },
+          boxShadow: {
+            glass: '0 8px 32px -4px rgba(13,20,36,0.06)',
+            'glass-lg': '0 16px 40px -6px rgba(13,20,36,0.12)',
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    html, body { margin: 0; padding: 0; background: #faf8ff; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; overscroll-behavior: none; }
+    ::-webkit-scrollbar { width: 7px; height: 7px; }
+    ::-webkit-scrollbar-thumb { background: #c3c5d9; border-radius: 999px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    .glass {
+      background: rgba(255, 255, 255, 0.78);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      box-shadow: 0 8px 32px -4px rgba(13, 20, 36, 0.06);
+    }
+    .glass-soft {
+      background: rgba(242, 243, 255, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.82);
+      border-radius: 14px;
+    }
+    .hide { display: none !important; }
+    .fade-in { animation: fadeIn .22s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+    .spinner {
+      width: 18px; height: 18px; border: 2px solid rgba(255,255,255,.4);
+      border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .nav-item[aria-current="page"] {
+      background: #1a5cff;
+      color: #edeeff;
+      box-shadow: 0 4px 16px rgba(26, 92, 255, 0.24);
+    }
+    .nav-item[aria-current="page"] .material-symbols-outlined { color: #edeeff; }
+    input:focus, select:focus, textarea:focus { outline: none; }
+    .bar { transition: height .3s ease; }
+  </style>
+</head>
+<body class="min-h-screen bg-background text-on-surface antialiased">
+  <div id="app" class="min-h-screen"></div>
+  <div id="toast" class="fixed bottom-6 left-1/2 z-[100] hidden -translate-x-1/2 items-center gap-2 rounded-2xl bg-on-surface/95 px-4 py-3 text-sm text-white shadow-2xl backdrop-blur">
+    <span class="material-symbols-outlined text-[18px] text-primary-fixed">check_circle</span>
+    <span id="toast-message">Done</span>
+  </div>
+  <script type="module" src="./admin.js"></script>
+</body>
+</html>

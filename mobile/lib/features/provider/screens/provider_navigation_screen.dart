@@ -1,11 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:maplibre_gl/mapbox_gl.dart';
+import 'package:maplibre_gl/maplibre_gl.dart';
 import '../../../routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/distance_util.dart';
 import '../../../models/service_request_model.dart';
 import '../../../services/location_service.dart';
+import '../../../services/phone_service.dart';
 import '../../../services/provider_service.dart';
 import '../../../services/service_request_service.dart';
 import '../../../services/socket_service.dart';
@@ -309,79 +310,79 @@ class _ProviderNavigationScreenState extends State<ProviderNavigationScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _locationLoading || _isRouting
-                                ? const Text(
-                                    'Calculating route & ETA...',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  )
-                                : Row(
-                                    children: [
-                                      Text(
-                                        '$distanceLabel • $etaLabel',
-                                        style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.w900,
-                                          color: AppColors.primary,
-                                        ),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _locationLoading || _isRouting
+                                  ? const Text(
+                                      'Calculating route & ETA...',
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w800,
                                       ),
-                                    ],
-                                  ),
-                            const SizedBox(height: 4),
-                            Text(
-                              vehicleDesc,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            if (requestId != null)
+                                    )
+                                  : Row(
+                                      children: [
+                                        Flexible(
+                                          child: Text(
+                                            '$distanceLabel • $etaLabel',
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.w900,
+                                              color: AppColors.primary,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                              const SizedBox(height: 4),
                               Text(
-                                'Request #${requestId.substring(0, 8).toUpperCase()}',
+                                vehicleDesc,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
-                                  fontSize: 11,
-                                  color: AppColors.textSecondaryLight,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
-                          ],
-                        ),
-                        if (customerMobile != null)
-                          IconButton(
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Calling $customerMobile...'),
+                              if (requestId != null)
+                                Text(
+                                  'Request #${requestId.substring(0, 8).toUpperCase()}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: AppColors.textSecondaryLight,
+                                  ),
                                 ),
-                              );
-                            },
-                            icon: const Icon(
-                              Icons.call_rounded,
-                              color: AppColors.primary,
-                              size: 28,
-                            ),
-                          )
-                        else
-                          IconButton(
-                            onPressed: () {
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () async {
+                            final opened =
+                                await PhoneService.call(customerMobile);
+                            if (!opened && context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text('Calling Customer...'),
+                                  content:
+                                      Text('Could not open the phone dialer.'),
                                 ),
                               );
-                            },
-                            icon: const Icon(
-                              Icons.call_rounded,
-                              color: AppColors.primary,
-                              size: 28,
-                            ),
+                            }
+                          },
+                          icon: const Icon(
+                            Icons.call_rounded,
+                            color: AppColors.primary,
+                            size: 28,
                           ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 16),

@@ -3,6 +3,7 @@ import '../../../routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/service_request_model.dart';
 import '../../../services/service_request_service.dart';
+import '../../../services/phone_service.dart';
 import '../../../services/provider_service.dart';
 import '../../../widgets/rr_button.dart';
 import '../../../widgets/rr_card.dart';
@@ -97,16 +98,15 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.call_rounded, color: AppColors.primary),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    customerMobile != null
-                        ? 'Calling $customerName ($customerMobile)...'
-                        : 'Calling $customerName...',
+            onPressed: () async {
+              final opened = await PhoneService.call(customerMobile);
+              if (!opened && context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Could not open the phone dialer.'),
                   ),
-                ),
-              );
+                );
+              }
             },
           ),
         ],

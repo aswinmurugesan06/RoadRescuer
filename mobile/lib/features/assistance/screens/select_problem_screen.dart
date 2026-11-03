@@ -10,11 +10,13 @@ import '../../../widgets/rr_text_field.dart';
 class SelectProblemScreen extends StatefulWidget {
   final String serviceType;
   final VehicleModel? vehicle;
+  final double? estimatedAmount;
 
   const SelectProblemScreen({
     super.key,
     required this.serviceType,
     this.vehicle,
+    this.estimatedAmount,
   });
 
   @override
@@ -178,20 +180,53 @@ class _SelectProblemScreenState extends State<SelectProblemScreen> {
                   ),
                 ],
               ),
-              child: RRButton(
-                label: 'Confirm Location',
-                icon: Icons.location_on_rounded,
-                onPressed: () {
-                  Navigator.pushNamed(
-                    context,
-                    AppRoutes.locationConfirm,
-                    arguments: {
-                      'serviceType': widget.serviceType,
-                      'problem': _finalProblemDescription,
-                      'vehicle': widget.vehicle,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (widget.estimatedAmount != null) ...[
+                    Row(
+                      children: [
+                        Icon(Icons.calculate_rounded,
+                            size: 16, color: AppColors.primary),
+                        const SizedBox(width: 6),
+                        const Expanded(
+                          child: Text(
+                            'Dynamic estimate applied',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          '₹${widget.estimatedAmount!.toStringAsFixed(0)}',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+                  RRButton(
+                    label: 'Confirm Location',
+                    icon: Icons.location_on_rounded,
+                    onPressed: () {
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.locationConfirm,
+                        arguments: {
+                          'serviceType': widget.serviceType,
+                          'problem': _finalProblemDescription,
+                          'vehicle': widget.vehicle,
+                          'estimatedAmount': widget.estimatedAmount,
+                        },
+                      );
                     },
-                  );
-                },
+                  ),
+                ],
               ),
             ),
           ],

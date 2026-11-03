@@ -14,12 +14,14 @@ class LocationConfirmationScreen extends StatefulWidget {
   final String serviceType;
   final String problem;
   final VehicleModel? vehicle;
+  final double? estimatedAmount;
 
   const LocationConfirmationScreen({
     super.key,
     required this.serviceType,
     required this.problem,
     this.vehicle,
+    this.estimatedAmount,
   });
 
   @override
@@ -147,6 +149,7 @@ class _LocationConfirmationScreenState
             : null,
         vehicleType: widget.vehicle?.type,
         category: widget.serviceType,
+        estimatedAmount: widget.estimatedAmount,
       );
 
       if (!mounted) return;
@@ -345,17 +348,25 @@ class _LocationConfirmationScreenState
                                                 MainAxisAlignment
                                                     .spaceBetween,
                                             children: [
-                                              const Text(
-                                                'Device GPS Location',
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: AppColors
-                                                      .textSecondaryLight,
+                                              const Expanded(
+                                                child: Text(
+                                                  'Device GPS Location',
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight:
+                                                        FontWeight.w600,
+                                                    color: AppColors
+                                                        .textSecondaryLight,
+                                                  ),
                                                 ),
                                               ),
                                               if (_deviceLocation != null)
                                                 Container(
+                                                  margin: const EdgeInsets.only(
+                                                      left: 6),
                                                   padding: const EdgeInsets
                                                       .symmetric(
                                                       horizontal: 6,
@@ -370,6 +381,7 @@ class _LocationConfirmationScreenState
                                                   child: Text(
                                                     _deviceLocation!
                                                         .accuracyLabel,
+                                                    maxLines: 1,
                                                     style: const TextStyle(
                                                       fontSize: 11,
                                                       fontWeight:
@@ -488,7 +500,7 @@ class _LocationConfirmationScreenState
                 ],
               ),
               child: RRButton(
-                label: 'Confirm Location & Request Help',
+                label: 'Confirm & Request Help',
                 icon: Icons.emergency_rounded,
                 isLoading: _isCreatingRequest,
                 onPressed: _isCreatingRequest ? null : _submitRequest,

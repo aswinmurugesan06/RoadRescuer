@@ -5,6 +5,7 @@ import '../../../core/utils/distance_util.dart';
 import '../../../models/service_request_model.dart';
 import '../../../services/location_service.dart';
 import '../../../services/service_request_service.dart';
+import '../../../services/phone_service.dart';
 import '../../../widgets/rr_button.dart';
 import '../../../widgets/rr_card.dart';
 import '../../../widgets/rr_map_view.dart';
@@ -305,12 +306,19 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
                             if (req?.customerMobile != null)
                               IconButton(
                                 icon: const Icon(Icons.call_rounded, color: AppColors.primary),
-                                onPressed: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('Calling ${req!.customerMobile}...'),
-                                    ),
+                                onPressed: () async {
+                                  final opened = await PhoneService.call(
+                                    req!.customerMobile,
                                   );
+                                  if (!opened && context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Could not open the phone dialer.',
+                                        ),
+                                      ),
+                                    );
+                                  }
                                 },
                               ),
                           ],

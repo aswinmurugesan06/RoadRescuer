@@ -3,6 +3,7 @@ import '../../../routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/service_request_model.dart';
 import '../../../services/billing_service.dart';
+import '../../../services/service_request_service.dart';
 import '../../../widgets/rr_button.dart';
 import '../../../widgets/rr_card.dart';
 import '../../../widgets/rr_text_field.dart';
@@ -136,6 +137,13 @@ class _CreateBillScreenState extends State<CreateBillScreen> {
             : null,
       );
 
+      // Mark the job complete so the provider becomes AVAILABLE again and can
+      // receive new requests. Wrapped separately so a status hiccup does not
+      // block the invoice that was already created.
+      try {
+        await ServiceRequestService.updateStatus(req.id, 'COMPLETED');
+      } catch (_) {}
+
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -261,7 +269,9 @@ class _CreateBillScreenState extends State<CreateBillScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const SectionHeader(title: 'Billed Items & Labor'),
+                        const Expanded(
+                          child: SectionHeader(title: 'Billed Items & Labor'),
+                        ),
                         TextButton.icon(
                           onPressed: _showAddItemDialog,
                           icon: const Icon(Icons.add, size: 18),
@@ -339,13 +349,18 @@ class _CreateBillScreenState extends State<CreateBillScreen> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text(
-                                  'Total Invoice Amount',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w800,
+                                const Expanded(
+                                  child: Text(
+                                    'Total Invoice Amount',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w800,
+                                    ),
                                   ),
                                 ),
+                                const SizedBox(width: 8),
                                 Text(
                                   '₹${_total.toStringAsFixed(2)}',
                                   style: const TextStyle(

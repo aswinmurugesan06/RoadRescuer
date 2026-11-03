@@ -1,54 +1,124 @@
-import '../models/rating_model.dart';
-import 'api_client.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-/// Flutter service for submitting and viewing service ratings and reviews.
+import '../models/rating_model.dart';
+import 'firebase/firestore_helpers.dart';
+
+/// Firestore-backed ratings and provider reputation.
 class RatingService {
-  /// Submit a 1-5 star rating and optional written review for a completed service request.
+  static FirebaseFirestore get _db => FirebaseFirestore.instance;
+
+  /// Submit a 1-5 star rating for a completed request.
   static Future<RatingModel> submitRating({
     required String requestId,
     required int score,
     String? review,
   }) async {
-    final res = await ApiClient.post(
-      '/ratings',
-      {
+    final uid = currentUid;
+    final customer = await currentProfileJson();
+    final requestDoc =
+        await _db.collection('serviceRequests').doc(requestId).get();
+    if (!requestDoc.exists) throw notFound('Service request');
+    final request = requestDoc.data() ?? <String, dynamic>{};
+
+    final providerId = request['providerId'] as String? ?? '';
+    if (providerId.isEmpty) {
+      throw notFound('Assigned provider');
+    }
+    final provider = await userJson(providerId);
+
+    final ratingRef = _db.collection('ratings').doc();
+    final providerRef = _db.collection('users').doc(providerId);
+    final now = FieldValue.serverTimestamp();
+
+    late Map<String, dynamic> ratingData;
+    await _db.runTransaction((transaction) async {
+      final providerSnapshot = await transaction.get(providerRef);
+      final providerData = providerSnapshot.data() ?? <String, dynamic>{};
+      final previousCount =
+          (providerData['ratingCount'] as num?)?.toInt() ?? 0;
+      final previousRating =
+          (providerData['rating'] as num?)?.toDouble() ?? score.toDouble();
+      final newCount = previousCount + 1;
+      final newRating = previousCount == 0
+          ? score.toDouble()
+          : ((previousRating * previousCount) + score) / newCount;
+
+      ratingData = {
         'requestId': requestId,
+        'customerId': uid,
+        'providerId': providerId,
         'score': score,
         if (review != null && review.trim().isNotEmpty)
           'review': review.trim(),
-      },
-    );
-    final data = res['data'] as Map<String, dynamic>;
-    return RatingModel.fromJson(data);
+        'customer': {
+          'id': uid,
+          'name': customer?['name'] ?? request['customerName'] ?? 'Customer',
+          'mobile': customer?['mobile'] ?? request['customerMobile'] ?? '',
+        },
+        'provider': {
+          'id': providerId,
+          'name': provider?['name'] ?? request['providerName'] ?? 'Provider',
+          'mobile': provider?['mobile'] ?? request['providerMobile'] ?? '',
+        },
+        'createdAt': now,
+        'updatedAt': now,
+      };
+
+      transaction.set(ratingRef, ratingData);
+      transaction.update(providerRef, {
+        'rating': newRating,
+        'ratingCount': newCount,
+        'updatedAt': now,
+      });
+    });
+
+    final created = await ratingRef.get();
+    final json = firestoreDocToJson(created);
+    final providerSnapshot = await providerRef.get();
+    final providerData = providerSnapshot.data() ?? <String, dynamic>{};
+    json['providerAverageRating'] =
+        (providerData['rating'] as num?)?.toDouble();
+    json['providerTotalRatings'] =
+        (providerData['ratingCount'] as num?)?.toInt();
+    return RatingModel.fromJson(json);
   }
 
-  /// Get rating submitted for a specific service request.
-  /// Returns null if not rated yet.
+  /// Get the rating for a specific request, or null if not rated yet.
   static Future<RatingModel?> getRatingByRequestId(String requestId) async {
-    try {
-      final res = await ApiClient.get('/ratings/request/$requestId');
-      final data = res['data'] as Map<String, dynamic>?;
-      return data != null ? RatingModel.fromJson(data) : null;
-    } on ApiException catch (e) {
-      if (e.statusCode == 404) return null;
-      rethrow;
-    }
+    final snapshot = await _db
+        .collection('ratings')
+        .where('requestId', isEqualTo: requestId)
+        .limit(1)
+        .get();
+    if (snapshot.docs.isEmpty) return null;
+    return RatingModel.fromJson(firestoreQueryDocToJson(snapshot.docs.first));
   }
 
-  /// Get ratings list for a provider.
-  static Future<Map<String, dynamic>> getProviderRatings(String providerId) async {
-    final res = await ApiClient.get('/ratings/provider/$providerId');
-    final data = res['data'] as Map<String, dynamic>? ?? {};
-    final rawRatings = data['ratings'] as List<dynamic>? ?? [];
-    final ratings = rawRatings
-        .map((e) => RatingModel.fromJson(e as Map<String, dynamic>))
+  /// Get ratings for a provider with a summary.
+  static Future<Map<String, dynamic>> getProviderRatings(
+    String providerId,
+  ) async {
+    final snapshot = await _db
+        .collection('ratings')
+        .where('providerId', isEqualTo: providerId)
+        .limit(200)
+        .get();
+
+    final ratings = snapshot.docs
+        .map(firestoreQueryDocToJson)
+        .map(RatingModel.fromJson)
         .toList();
-    final summary = data['summary'] as Map<String, dynamic>? ?? {};
+
+    final total = ratings.length;
+    final average = total == 0
+        ? 5.0
+        : ratings.fold<double>(0, (scoreSum, rating) => scoreSum + rating.score) /
+            total;
 
     return {
       'ratings': ratings,
-      'averageRating': (summary['averageRating'] as num?)?.toDouble() ?? 5.0,
-      'totalRatings': (summary['totalRatings'] as num?)?.toInt() ?? 0,
+      'averageRating': average,
+      'totalRatings': total,
     };
   }
 }

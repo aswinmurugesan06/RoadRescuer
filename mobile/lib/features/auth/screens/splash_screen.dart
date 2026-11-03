@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../../../routes/app_routes.dart';
 import '../../../core/constants/app_constants.dart';
@@ -15,6 +17,7 @@ class _SplashScreenState extends State<SplashScreen>
   late AnimationController _ctrl;
   late Animation<double> _fadeAnim;
   late Animation<double> _scaleAnim;
+  Timer? _navigateTimer;
 
   @override
   void initState() {
@@ -25,7 +28,7 @@ class _SplashScreenState extends State<SplashScreen>
       CurvedAnimation(parent: _ctrl, curve: const Interval(0.0, 0.7, curve: Curves.easeOutBack)),
     );
     _ctrl.forward();
-    Future.delayed(AppConstants.splashDuration, _navigate);
+    _navigateTimer = Timer(AppConstants.splashDuration, _navigate);
   }
 
   void _navigate() {
@@ -34,6 +37,7 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   void dispose() {
+    _navigateTimer?.cancel();
     _ctrl.dispose();
     super.dispose();
   }
