@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../../core/navigation/route_observer.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/provider_model.dart';
 import '../../../models/service_request_model.dart';
@@ -21,12 +22,14 @@ class ProviderHomeScreen extends StatefulWidget {
   State<ProviderHomeScreen> createState() => _ProviderHomeScreenState();
 }
 
-class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
+class _ProviderHomeScreenState extends State<ProviderHomeScreen>
+    with RouteAware, WidgetsBindingObserver {
   bool _isOnline = false;
   bool _isTogglingAvailability = false;
   bool _isUpdatingLocation = false;
   bool _isLoadingRequests = false;
   bool _isAccepting = false;
+  bool _routeSubscribed = false;
   DeviceLocation? _currentDeviceLocation;
   ProviderAccountModel? _account;
   List<ServiceRequestModel> _availableRequests = [];
@@ -34,12 +37,45 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadProfile();
     _initSocket();
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) {
+      if (_routeSubscribed) {
+        appRouteObserver.unsubscribe(this);
+      }
+      appRouteObserver.subscribe(this, route);
+      _routeSubscribed = true;
+    }
+  }
+
+  @override
+  void didPopNext() {
+    // A job screen was closed — reload so accepted/completed requests do not
+    // linger in the "available jobs" list.
+    _refresh();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _refresh();
+  }
+
+  Future<void> _refresh() async {
+    await _loadProfile();
+    if (_isOnline) await _loadAvailableRequests();
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    if (_routeSubscribed) appRouteObserver.unsubscribe(this);
     SocketService.instance.clearProviderListeners();
     super.dispose();
   }
@@ -67,6 +103,10 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
         setState(() {
           _account = account;
           _isOnline = account.providerProfile.availability == 'AVAILABLE';
+          if (!_isOnline) {
+            _availableRequests = [];
+            _isLoadingRequests = false;
+          }
         });
         if (account.providerProfile.availability == 'AVAILABLE') {
           _loadAvailableRequests();

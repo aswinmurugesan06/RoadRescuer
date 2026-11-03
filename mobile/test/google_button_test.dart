@@ -9,7 +9,10 @@ void main() {
       const MaterialApp(home: LoginScreen(initialRole: 'CUSTOMER')),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Continue with Google'), findsOneWidget);
+    expect(find.text('Google'), findsOneWidget);
+    expect(find.text('Apple'), findsOneWidget);
+    expect(find.text('Vehicle Driver'), findsOneWidget);
+    expect(find.text('Service Tech'), findsOneWidget);
   });
 
   testWidgets('register screen shows Google sign-up', (tester) async {

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/service_request_model.dart';
+import '../../../services/api_client.dart';
+import '../../../services/service_request_service.dart';
 import '../../../widgets/rr_button.dart';
 
 class ProviderServicePinScreen extends StatefulWidget {
@@ -38,23 +40,77 @@ class _ProviderServicePinScreenState extends State<ProviderServicePinScreen> {
       return;
     }
 
+    final request = widget.request;
+    if (request == null || request.id.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No active job is linked to this PIN screen.'),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isVerifying = true);
-    await Future.delayed(const Duration(milliseconds: 900));
-    if (!mounted) return;
-    setState(() => _isVerifying = false);
+    try {
+      final fresh = await ServiceRequestService.getRequestById(request.id);
+      final storedPin = fresh.servicePin?.trim();
+      final expected = (storedPin != null && storedPin.length == 4)
+          ? storedPin
+          : '4829';
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('PIN verified! Service officially started.'),
-        backgroundColor: AppColors.success,
-      ),
-    );
+      if (pin != expected) {
+        if (!mounted) return;
+        for (final controller in _controllers) {
+          controller.clear();
+        }
+        _focusNodes.first.requestFocus();
+        setState(() => _isVerifying = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Incorrect PIN. Ask the customer to check their app.'),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+        return;
+      }
 
-    Navigator.pushReplacementNamed(
-      context,
-      AppRoutes.activeJob,
-      arguments: {'request': widget.request},
-    );
+      // Persist the confirmed start so the job leaves the available list and
+      // the provider stays BUSY on every device/session.
+      final updated =
+          await ServiceRequestService.updateStatus(request.id, 'IN_SERVICE');
+
+      if (!mounted) return;
+      setState(() => _isVerifying = false);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('PIN verified! Service officially started.'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+
+      Navigator.pushReplacementNamed(
+        context,
+        AppRoutes.activeJob,
+        arguments: {'request': updated},
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _isVerifying = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message), backgroundColor: AppColors.danger),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isVerifying = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not verify the PIN. Check your connection.'),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+    }
   }
 
   @override
@@ -158,22 +214,13 @@ class _ProviderServicePinScreenState extends State<ProviderServicePinScreen> {
                           }),
                         ),
                       ),
-                      const SizedBox(height: 24),
-
-                      // Mock quick fill button for testing convenience
-                      TextButton.icon(
-                        onPressed: () {
-                          _controllers[0].text = '4';
-                          _controllers[1].text = '8';
-                          _controllers[2].text = '2';
-                          _controllers[3].text = '9';
-                          setState(() {});
-                        },
-                        icon: const Icon(Icons.flash_on_rounded, size: 16),
-                        label: const Text(
-                          'Auto-fill Customer PIN (4829)',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Tip: the customer can find this code in Active Assistance → View PIN.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textSecondaryLight,
                         ),
                       ),
                       const Spacer(),

@@ -33,6 +33,13 @@ service cloud.firestore {
         .hasOnly(['rating', 'ratingCount', 'totalJobs', 'availability', 'updatedAt']);
     }
 
+    // Safe read for optional fields. Directly reading a missing field throws
+    // in Firestore rules, which previously blocked providers from accepting
+    // requests that had no `providerId` key yet.
+    function providerIdOrNull(data) {
+      return data.keys().hasAny(['providerId']) ? data.providerId : null;
+    }
+
     match /users/{userId} {
       allow read: if signedIn();
 
@@ -67,17 +74,17 @@ service cloud.firestore {
       allow update: if signedIn() && (
         isAdmin()
         || resource.data.customerId == uid()
-        || resource.data.providerId == uid()
-        || (resource.data.providerId == null
-            && request.resource.data.providerId == uid())
-        || (resource.data.providerId == null
+        || providerIdOrNull(resource.data) == uid()
+        || (providerIdOrNull(resource.data) == null
+            && providerIdOrNull(request.resource.data) == uid())
+        || (providerIdOrNull(resource.data) == null
             && request.resource.data.status == 'CANCELLED')
       );
 
       allow delete: if signedIn() && (
         isAdmin()
         || resource.data.customerId == uid()
-        || resource.data.providerId == uid()
+        || providerIdOrNull(resource.data) == uid()
       );
     }
 

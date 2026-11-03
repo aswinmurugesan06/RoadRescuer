@@ -58,6 +58,19 @@ class _ProviderShellState extends State<ProviderShell> {
     ];
   }
 
+  void _selectTab(int index) {
+    setState(() {
+      // Refresh data-backed tabs when they are opened so a job accepted on
+      // another route is not shown again as "available".
+      if (index == 0) {
+        _pages[0] = const ProviderHomeScreen();
+      } else if (index == 1) {
+        _pages[1] = const ActiveJobScreen();
+      }
+      _currentIndex = index;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -65,7 +78,7 @@ class _ProviderShellState extends State<ProviderShell> {
       bottomNavigationBar: GlassBottomNav(
         items: _destinations,
         currentIndex: _currentIndex,
-        onTap: (i) => setState(() => _currentIndex = i),
+        onTap: _selectTab,
       ),
     );
   }

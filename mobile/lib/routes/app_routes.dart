@@ -160,7 +160,12 @@ class AppRoutes {
         request: args?['request'] as ServiceRequestModel?,
       ));
     }
-    if (name == servicePin) return _slide(const ServiceVerificationPinScreen());
+    if (name == servicePin) {
+      final args = settings.arguments as Map<String, dynamic>?;
+      return _slide(ServiceVerificationPinScreen(
+        pin: args?['pin'] as String?,
+      ));
+    }
 
     if (name == bill) {
       final args = settings.arguments as Map<String, dynamic>?;

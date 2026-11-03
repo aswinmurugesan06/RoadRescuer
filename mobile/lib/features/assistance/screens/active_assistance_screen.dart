@@ -1461,7 +1461,11 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
             ),
           ),
           TextButton(
-            onPressed: () => Navigator.pushNamed(context, AppRoutes.servicePin),
+            onPressed: () => Navigator.pushNamed(
+              context,
+              AppRoutes.servicePin,
+              arguments: {'pin': _request?.servicePin},
+            ),
             child: const Text('View PIN', style: TextStyle(fontWeight: FontWeight.w700)),
           ),
         ],

@@ -253,7 +253,10 @@ class _ProviderCard extends StatelessWidget {
                         Expanded(
                           child: Text(
                             provider.name,
-                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                                fontSize: 15, fontWeight: FontWeight.w700),
                           ),
                         ),
                         const Icon(Icons.verified_rounded, size: 16, color: AppColors.secondary),
@@ -274,11 +277,17 @@ class _ProviderCard extends StatelessWidget {
                       children: [
                         RRStarRating(rating: provider.rating),
                         const SizedBox(width: 8),
-                        Text(
-                          '${provider.totalJobs} jobs',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                        Flexible(
+                          child: Text(
+                            '${provider.totalJobs} jobs',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: isDark
+                                  ? AppColors.textSecondaryDark
+                                  : AppColors.textSecondaryLight,
+                            ),
                           ),
                         ),
                       ],

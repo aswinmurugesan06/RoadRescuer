@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../core/utils/distance_util.dart';
@@ -33,6 +35,7 @@ class ServiceRequestService {
     final profile = await currentProfileJson();
     final doc = _collection.doc();
     final now = FieldValue.serverTimestamp();
+    final servicePin = _generateServicePin();
 
     await doc.set({
       'customerId': uid,
@@ -45,6 +48,7 @@ class ServiceRequestService {
       'serviceType': serviceType,
       'problemDescription': problemDescription,
       'status': 'PENDING',
+      'servicePin': servicePin,
       'customerLatitude': customerLatitude,
       'customerLongitude': customerLongitude,
       if (customerAddress != null && customerAddress.isNotEmpty)
@@ -364,6 +368,12 @@ class ServiceRequestService {
       'cancellationReason': request.cancellationReason,
       'createdAt': request.date.toIso8601String(),
     };
+  }
+
+  /// Generates the 4-digit code the customer shares with the technician.
+  static String _generateServicePin() {
+    final pin = Random().nextInt(9000) + 1000;
+    return pin.toString();
   }
 
   static String _normalizeCategory(String value) {

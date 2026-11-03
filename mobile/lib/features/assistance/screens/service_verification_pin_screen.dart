@@ -3,9 +3,12 @@ import '../../../core/theme/app_colors.dart';
 import '../../../widgets/rr_button.dart';
 
 class ServiceVerificationPinScreen extends StatelessWidget {
-  const ServiceVerificationPinScreen({super.key});
+  final String? pin;
 
-  final String _pin = '4829';
+  const ServiceVerificationPinScreen({super.key, this.pin});
+
+  String get _pin =>
+      (pin != null && pin!.trim().length == 4) ? pin!.trim() : '4829';
 
   @override
   Widget build(BuildContext context) {

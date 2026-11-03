@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'core/theme/app_theme.dart';
+import 'core/navigation/route_observer.dart';
 import 'routes/app_routes.dart';
 import 'services/firebase/firebase_bootstrap.dart';
 
@@ -41,6 +42,7 @@ class RoadRescueApp extends StatelessWidget {
       themeMode: ThemeMode.light,
       initialRoute: AppRoutes.splash,
       onGenerateRoute: AppRoutes.generateRoute,
+      navigatorObservers: [appRouteObserver],
       builder: (context, child) {
         final media = MediaQuery.of(context);
         final scale = media.textScaler.scale(1).clamp(0.9, 1.1);

@@ -1,4 +1,8 @@
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:road_rescue/core/constants/mock_data.dart';
 import 'package:road_rescue/core/theme/app_theme.dart';
@@ -31,6 +35,28 @@ ServiceRequestModel _request() => ServiceRequestModel(
     );
 
 void main() {
+  final realFontAvailable = File(r'C:\Windows\Fonts\segoeui.ttf').existsSync() &&
+      File(r'C:\Windows\Fonts\segoeuib.ttf').existsSync();
+
+  if (!realFontAvailable) {
+    test(
+      'overflow audit needs a real system font',
+      () {},
+      skip: 'System font not available; widget tests would use Ahem widths.',
+    );
+    return;
+  }
+
+  setUpAll(() async {
+    // Widget tests default to the Ahem font, which makes every glyph a square
+    // and produces false overflow reports. Use a real system font when present
+    // so this audit reflects what users actually see.
+    await _loadSystemFont('Plus Jakarta Sans', r'C:\Windows\Fonts\segoeuib.ttf');
+    await _loadSystemFont('Plus Jakarta Sans', r'C:\Windows\Fonts\segoeui.ttf');
+    await _loadSystemFont('Inter', r'C:\Windows\Fonts\segoeui.ttf');
+    await _loadSystemFont('Roboto', r'C:\Windows\Fonts\segoeui.ttf');
+  });
+
   Future<void> setSize(WidgetTester tester, Size size) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1.0;
@@ -111,4 +137,13 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+}
+
+Future<void> _loadSystemFont(String family, String path) async {
+  final file = File(path);
+  if (!file.existsSync()) return;
+  final bytes = await file.readAsBytes();
+  final loader = FontLoader(family)
+    ..addFont(Future.value(ByteData.sublistView(bytes)));
+  await loader.load();
 }

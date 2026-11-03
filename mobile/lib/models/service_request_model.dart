@@ -63,6 +63,7 @@ class ServiceRequestModel {
   final String? category;
   final String? customerAddress;
   final String? cancellationReason;
+  final String? servicePin;
 
   const ServiceRequestModel({
     required this.id,
@@ -87,6 +88,7 @@ class ServiceRequestModel {
     this.category,
     this.customerAddress,
     this.cancellationReason,
+    this.servicePin,
   });
 
   factory ServiceRequestModel.fromJson(Map<String, dynamic> json) {
@@ -168,6 +170,7 @@ class ServiceRequestModel {
       category: json['category'] as String?,
       customerAddress: addr,
       cancellationReason: json['cancellationReason'] as String?,
+      servicePin: json['servicePin'] as String?,
     );
   }
 
@@ -194,6 +197,7 @@ class ServiceRequestModel {
     String? category,
     String? customerAddress,
     String? cancellationReason,
+    String? servicePin,
   }) {
     return ServiceRequestModel(
       id: id ?? this.id,
@@ -218,6 +222,7 @@ class ServiceRequestModel {
       category: category ?? this.category,
       customerAddress: customerAddress ?? this.customerAddress,
       cancellationReason: cancellationReason ?? this.cancellationReason,
+      servicePin: servicePin ?? this.servicePin,
     );
   }
 
