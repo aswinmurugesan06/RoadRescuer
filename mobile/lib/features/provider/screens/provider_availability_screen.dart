@@ -151,7 +151,12 @@ class _ProviderAvailabilityScreenState extends State<ProviderAvailabilityScreen>
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.fromLTRB(
+            20,
+            20,
+            20,
+            20 + MediaQuery.of(context).viewInsets.bottom,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -160,22 +165,34 @@ class _ProviderAvailabilityScreenState extends State<ProviderAvailabilityScreen>
                 child: Column(
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '24/7 Emergency Dispatch',
-                              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-                            ),
-                            SizedBox(height: 2),
-                            Text(
-                              'Receive urgent night-time highway breakdown alerts',
-                              style: TextStyle(fontSize: 12, color: AppColors.textSecondaryLight),
-                            ),
-                          ],
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '24/7 Emergency Dispatch',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                'Receive urgent night-time highway breakdown alerts',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.textSecondaryLight,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
+                        const SizedBox(width: 8),
                         Switch(
                           value: _is24x7,
                           activeThumbColor: AppColors.primary,
@@ -196,12 +213,19 @@ class _ProviderAvailabilityScreenState extends State<ProviderAvailabilityScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          'Maximum Travel Distance',
-                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                        const Expanded(
+                          child: Text(
+                            'Maximum Travel Distance',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
+                        const SizedBox(width: 8),
                         Text(
                           '${_serviceRadius.toInt()} km',
                           style: const TextStyle(
@@ -355,9 +379,19 @@ class _ProviderAvailabilityScreenState extends State<ProviderAvailabilityScreen>
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+          Expanded(
+            child: Text(
+              title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
           Switch(
             value: val,
             activeThumbColor: AppColors.primary,

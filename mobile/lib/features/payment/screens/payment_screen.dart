@@ -140,7 +140,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
             children: [
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
+                  padding: EdgeInsets.fromLTRB(
+                    20,
+                    20,
+                    20,
+                    20 + MediaQuery.of(context).viewInsets.bottom,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -176,6 +181,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           const SizedBox(height: 6),
                           Text(
                             'Includes GST (18%) • ${bill.providerName}',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               fontSize: 12,
                               color: Color(0xFFCBD5E1),
@@ -241,18 +248,17 @@ class _PaymentScreenState extends State<PaymentScreen> {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          Row(
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
                             children: ['Google Pay', 'PhonePe', 'Paytm']
                                 .map((app) {
                               final isAppSelected = _selectedUpiApp == app;
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 8),
-                                child: ChoiceChip(
-                                  label: Text(app),
-                                  selected: isAppSelected,
-                                  onSelected: (_) =>
-                                      setState(() => _selectedUpiApp = app),
-                                ),
+                              return ChoiceChip(
+                                label: Text(app),
+                                selected: isAppSelected,
+                                onSelected: (_) =>
+                                    setState(() => _selectedUpiApp = app),
                               );
                             }).toList(),
                           ),
@@ -299,14 +305,17 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     const SizedBox(height: 28),
 
                     // Security assurance
-                    const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                    const Wrap(
+                      alignment: WrapAlignment.center,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 8,
+                      runSpacing: 4,
                       children: [
                         Icon(Icons.lock_rounded,
                             size: 16, color: AppColors.success),
-                        SizedBox(width: 8),
                         Text(
                           '256-bit SSL encrypted • Razorpay Gateway Verified',
+                          textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 12,
                             color: AppColors.textSecondaryLight,
@@ -387,6 +396,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   children: [
                     Text(
                       title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
@@ -394,6 +405,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     ),
                     Text(
                       subtitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 12,
                         color: isDark

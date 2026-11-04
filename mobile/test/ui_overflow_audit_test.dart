@@ -16,6 +16,8 @@ import 'package:road_rescue/features/auth/screens/forgot_password_screen.dart';
 import 'package:road_rescue/features/auth/screens/role_selector_screen.dart';
 import 'package:road_rescue/features/customer/screens/customer_home_screen.dart';
 import 'package:road_rescue/features/provider/screens/provider_home_screen.dart';
+import 'package:road_rescue/features/provider/screens/provider_availability_screen.dart';
+import 'package:road_rescue/features/payment/screens/payment_screen.dart';
 import 'package:road_rescue/features/assistance/screens/service_verification_pin_screen.dart';
 import 'package:road_rescue/features/auth/screens/login_screen.dart';
 import 'package:road_rescue/features/provider/screens/active_job_screen.dart';
@@ -283,6 +285,21 @@ void main() {
           initialBill: _pendingBill(),
         ),
       );
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('select payment method has no overflow at $label',
+        (tester) async {
+      await setSize(tester, size);
+      await pumpScreen(tester, PaymentScreen(bill: _pendingBill()));
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('coverage and availability has no overflow at $label',
+        (tester) async {
+      await setSize(tester, size);
+      await pumpScreen(tester, const ProviderAvailabilityScreen());
       await tester.pump(const Duration(milliseconds: 300));
       expect(tester.takeException(), isNull);
     });
