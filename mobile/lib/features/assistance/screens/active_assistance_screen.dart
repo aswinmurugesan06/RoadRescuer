@@ -20,8 +20,13 @@ import '../../../widgets/rr_status_badge.dart';
 
 class ActiveAssistanceScreen extends StatefulWidget {
   final ServiceRequestModel? request;
+  final BillModel? initialBill;
 
-  const ActiveAssistanceScreen({super.key, this.request});
+  const ActiveAssistanceScreen({
+    super.key,
+    this.request,
+    this.initialBill,
+  });
 
   @override
   State<ActiveAssistanceScreen> createState() => _ActiveAssistanceScreenState();
@@ -46,6 +51,7 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
   void initState() {
     super.initState();
     _request = widget.request;
+    _bill = widget.initialBill;
     _connectSocket();
     _startPolling();
     _fetchBill();
@@ -800,55 +806,74 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(
-                      Icons.receipt_long_rounded,
-                      color: AppColors.primary,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Invoice Ready',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      Text(
-                        '#INV-${bill.requestId.length >= 8 ? bill.requestId.substring(0, 8).toUpperCase() : bill.requestId.toUpperCase()}',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
-                          fontWeight: FontWeight.w600,
-                        ),
+                      child: const Icon(
+                        Icons.receipt_long_rounded,
+                        color: AppColors.primary,
+                        size: 24,
                       ),
-                    ],
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(12),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Invoice Ready',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          Text(
+                            '#INV-${bill.requestId.length >= 8 ? bill.requestId.substring(0, 8).toUpperCase() : bill.requestId.toUpperCase()}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: isDark
+                                  ? AppColors.textSecondaryDark
+                                  : AppColors.textSecondaryLight,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                child: Text(
-                  statusLabel,
-                  style: TextStyle(
-                    color: statusColor,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.5,
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    statusLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: statusColor,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.5,
+                    ),
                   ),
                 ),
               ),
@@ -888,18 +913,31 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
           InfoRow(label: 'GST / Tax (18%)', value: '₹${bill.taxAmount.toStringAsFixed(2)}'),
           const SizedBox(height: 8),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Total Payable',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+              const Expanded(
+                child: Text(
+                  'Total Payable',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
               ),
-              Text(
-                '₹${bill.grandTotal.toStringAsFixed(2)}',
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.primary,
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  '₹${bill.grandTotal.toStringAsFixed(2)}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.right,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.primary,
+                  ),
                 ),
               ),
             ],
@@ -958,6 +996,8 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
               icon: const Icon(Icons.receipt_long_outlined, size: 16),
               label: const Text(
                 'View Itemized Breakdown & Dispute Options',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
               ),
             ),

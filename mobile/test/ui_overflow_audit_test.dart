@@ -22,6 +22,7 @@ import 'package:road_rescue/features/provider/screens/active_job_screen.dart';
 import 'package:road_rescue/features/provider/screens/create_bill_screen.dart';
 import 'package:road_rescue/features/provider/screens/provider_service_pin_screen.dart';
 import 'package:road_rescue/models/service_request_model.dart';
+import 'package:road_rescue/models/bill_model.dart';
 
 ServiceRequestModel _request() => ServiceRequestModel(
       id: 'req-demo-12345678',
@@ -74,6 +75,31 @@ ServiceRequestModel _aiRequest() => _request().copyWith(
 ServiceRequestModel _searchingRequest() => _request().copyWith(
       status: RequestStatus.searching,
       providerName: 'Assigning...',
+    );
+
+BillModel _pendingBill() => const BillModel(
+      id: 'bill-demo-1',
+      requestId: 'req-demo-12345678',
+      status: 'PENDING',
+      items: [
+        BillItemModel(
+          description: 'Roadside assistance — labor charges',
+          quantity: 1,
+          unitPrice: 500,
+          total: 500,
+        ),
+        BillItemModel(
+          description: 'Replacement tyre and valve stem',
+          quantity: 1,
+          unitPrice: 1200,
+          total: 1200,
+        ),
+      ],
+      subtotal: 1700,
+      taxRate: 0.18,
+      taxAmount: 306,
+      grandTotal: 2006,
+      notes: 'Tyre replaced and wheel balanced. Please approve to complete payment.',
     );
 
 void main() {
@@ -242,6 +268,20 @@ void main() {
       await pumpScreen(
         tester,
         ActiveAssistanceScreen(request: _searchingRequest()),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('invoice ready card has no overflow at $label',
+        (tester) async {
+      await setSize(tester, size);
+      await pumpScreen(
+        tester,
+        ActiveAssistanceScreen(
+          request: _aiRequest(),
+          initialBill: _pendingBill(),
+        ),
       );
       await tester.pump(const Duration(milliseconds: 300));
       expect(tester.takeException(), isNull);
