@@ -52,7 +52,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _confirmLogout() {
     showDialog(
       context: context,
-      barrierColor: Colors.black.withOpacity(0.55),
+      barrierColor: Colors.black.withValues(alpha: 0.55),
       builder: (ctx) {
         final isDark = Theme.of(ctx).brightness == Brightness.dark;
         final dialogBg = isDark ? const Color(0xFF1E293B) : Colors.white;
@@ -81,7 +81,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   width: 52,
                   height: 52,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.12),
+                    color: AppColors.primary.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -256,7 +256,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       title: 'Push Notifications',
                       trailing: Switch(
                         value: _notificationsEnabled,
-                        activeColor: AppColors.primary,
+                        activeThumbColor: AppColors.primary,
                         onChanged: (v) => setState(() => _notificationsEnabled = v),
                       ),
                     ),
@@ -310,8 +310,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               // Logout
               RRCard(
                 onTap: _confirmLogout,
-                child: Row(
-                  children: const [
+                child: const Row(
+                  children: [
                     Icon(Icons.logout_rounded, color: AppColors.danger),
                     SizedBox(width: 14),
                     Text(

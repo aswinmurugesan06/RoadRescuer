@@ -19,6 +19,7 @@ import '../models/vehicle_model.dart';
 import '../models/service_request_model.dart';
 import '../models/bill_model.dart';
 import '../services/ai_damage_service.dart';
+import '../services/cost_estimation_service.dart';
 
 // Assistance
 import '../features/assistance/screens/request_assistance_screen.dart';
@@ -129,6 +130,7 @@ class AppRoutes {
       return _slide(CostEstimationScreen(
         vehicle: args?['vehicle'] as VehicleModel?,
         initialServiceType: args?['serviceType'] as String?,
+        isProvider: args?['isProvider'] as bool? ?? false,
       ));
     }
     if (name == selectProblem) {
@@ -138,6 +140,7 @@ class AppRoutes {
         vehicle: args?['vehicle'] as VehicleModel?,
         estimatedAmount: (args?['estimatedAmount'] as num?)?.toDouble(),
         aiAssessment: args?['aiAssessment'] as AiDamageAssessment?,
+        costEstimate: args?['costEstimate'] as CostEstimate?,
       ));
     }
     if (name == locationConfirm) {
@@ -148,6 +151,7 @@ class AppRoutes {
         vehicle: args?['vehicle'] as VehicleModel?,
         estimatedAmount: (args?['estimatedAmount'] as num?)?.toDouble(),
         aiAssessment: args?['aiAssessment'] as AiDamageAssessment?,
+        costEstimate: args?['costEstimate'] as CostEstimate?,
       ));
     }
     if (name == nearbyProviders) {

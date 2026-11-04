@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../core/theme/app_colors.dart';
 import '../models/service_request_model.dart';
+import 'damage_photo_view.dart';
 
 /// Provider-facing "Mechanic Prep" card built from the AI damage report.
 ///
@@ -91,23 +92,11 @@ class AiMechanicPrepCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          if ((request.damageImageUrl ?? '').isNotEmpty)
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.network(
-                request.damageImageUrl!,
-                width: double.infinity,
-                height: 155,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _imagePlaceholder(),
-                loadingBuilder: (context, child, progress) {
-                  if (progress == null) return child;
-                  return _imagePlaceholder(loading: true);
-                },
-              ),
-            )
-          else
-            _imagePlaceholder(),
+          DamagePhotoView(
+            imageUrl: request.damageImageUrl,
+            height: 155,
+            placeholderLabel: 'Damage photo not available',
+          ),
           const SizedBox(height: 11),
           if ((request.aiDetectedIssue ?? '').isNotEmpty)
             Text(
@@ -219,43 +208,6 @@ class AiMechanicPrepCard extends StatelessWidget {
             ),
           ],
         ],
-      ),
-    );
-  }
-
-  Widget _imagePlaceholder({bool loading = false}) {
-    return Container(
-      width: double.infinity,
-      height: 155,
-      decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Center(
-        child: loading
-            ? const SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : const Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.image_search_rounded,
-                    size: 26,
-                    color: AppColors.primary,
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    'Damage photo not available',
-                    style: TextStyle(
-                      fontSize: 9.5,
-                      color: AppColors.textSecondaryLight,
-                    ),
-                  ),
-                ],
-              ),
       ),
     );
   }

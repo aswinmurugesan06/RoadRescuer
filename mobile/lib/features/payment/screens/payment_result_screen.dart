@@ -29,8 +29,8 @@ class PaymentResultScreen extends StatelessWidget {
     final displayAmount = amount ?? 0.0;
     final displayMethod = _formatMethod(method ?? 'UPI');
 
-    return WillPopScope(
-      onWillPop: () async => false,
+    return PopScope(
+      canPop: false,
       child: Scaffold(
         body: SafeArea(
           child: Padding(
@@ -45,7 +45,7 @@ class PaymentResultScreen extends StatelessWidget {
                   height: 90,
                   decoration: BoxDecoration(
                     color: (success ? AppColors.success : AppColors.danger)
-                        .withOpacity(0.12),
+                        .withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(

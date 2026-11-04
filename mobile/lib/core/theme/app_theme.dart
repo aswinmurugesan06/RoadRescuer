@@ -60,7 +60,7 @@ class AppTheme {
       splashFactory: InkSparkle.splashFactory,
 
       appBarTheme: AppBarTheme(
-        backgroundColor: surface.withOpacity(0.92),
+        backgroundColor: surface.withValues(alpha: 0.92),
         foregroundColor: onSurface,
         elevation: 0,
         scrolledUnderElevation: 0,
@@ -80,18 +80,18 @@ class AppTheme {
       ),
 
       cardTheme: CardThemeData(
-        color: card.withOpacity(isDark ? 1 : 0.88),
+        color: card.withValues(alpha: isDark ? 1 : 0.88),
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: BorderSide(color: border.withOpacity(0.7)),
+          side: BorderSide(color: border.withValues(alpha: 0.7)),
         ),
         margin: EdgeInsets.zero,
       ),
 
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: isDark ? card : Colors.white.withOpacity(0.82),
+        fillColor: isDark ? card : Colors.white.withValues(alpha: 0.82),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
         border: OutlineInputBorder(
@@ -156,7 +156,7 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.primary,
-          side: BorderSide(color: AppColors.primary.withOpacity(0.35)),
+          side: BorderSide(color: AppColors.primary.withValues(alpha: 0.35)),
           minimumSize: const Size(0, 52),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(15),
@@ -180,7 +180,7 @@ class AppTheme {
 
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: surface,
-        indicatorColor: AppColors.primary.withOpacity(0.1),
+        indicatorColor: AppColors.primary.withValues(alpha: 0.1),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
             return GoogleFonts.plusJakartaSans(
@@ -219,7 +219,7 @@ class AppTheme {
       ),
 
       dividerTheme: DividerThemeData(
-        color: border.withOpacity(0.75),
+        color: border.withValues(alpha: 0.75),
         thickness: 1,
         space: 0,
       ),

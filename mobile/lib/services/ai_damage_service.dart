@@ -199,31 +199,51 @@ class AiDamageService {
   static Future<AiDamageAssessment> assess({
     required Uint8List imageBytes,
     required String vehicleType,
+    String? fallbackCategory,
   }) async {
     if (imageBytes.isEmpty) {
       return AiDamageAssessment(
-        result: mockResult(vehicleType: vehicleType),
+        result: mockResult(
+          vehicleType: vehicleType,
+          fallbackCategory: fallbackCategory,
+        ),
       );
     }
 
-    // Each helper is failure-safe, so Future.wait cannot reject the whole UI.
-    final results = await Future.wait<Object>([
-      uploadDamageImage(imageBytes),
-      analyzeVehicleDamage(imageBytes: imageBytes, vehicleType: vehicleType),
-    ]);
+    try {
+      // Each helper is failure-safe, so this should not reject.
+      final results = await Future.wait<Object>([
+        uploadDamageImage(imageBytes),
+        analyzeVehicleDamage(
+          imageBytes: imageBytes,
+          vehicleType: vehicleType,
+          fallbackCategory: fallbackCategory,
+        ),
+      ]);
 
-    return AiDamageAssessment(
-      result: results[1] as AiDamageResult,
-      imageUrl: results[0] as String,
-    );
+      return AiDamageAssessment(
+        result: results[1] as AiDamageResult,
+        imageUrl: results[0] as String,
+      );
+    } catch (_) {
+      return AiDamageAssessment(
+        result: mockResult(
+          vehicleType: vehicleType,
+          fallbackCategory: fallbackCategory,
+        ),
+        imageUrl: _dataUrl(imageBytes),
+      );
+    }
   }
 
-  /// Cloudinary unsigned upload. Returns `''` when unavailable.
+  /// Cloudinary unsigned upload. Falls back to a Base64 data URL so the
+  /// provider can always see the image from another session/device.
   static Future<String> uploadDamageImage(
     Uint8List imageBytes, {
     String fileName = 'damage.jpg',
   }) async {
-    if (!hasCloudinary || imageBytes.isEmpty) return '';
+    if (imageBytes.isEmpty) return '';
+    if (!hasCloudinary) return _dataUrl(imageBytes);
 
     try {
       final uri = Uri.parse(
@@ -240,12 +260,15 @@ class AiDamageService {
           ),
         );
 
-      final streamed = await request.send().timeout(const Duration(seconds: 25));
+      final streamed = await request.send().timeout(const Duration(seconds: 12));
       final response = await http.Response.fromStream(streamed);
-      if (response.statusCode < 200 || response.statusCode >= 300) return '';
-      return extractSecureUrl(response.body);
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        return _dataUrl(imageBytes);
+      }
+      final secureUrl = extractSecureUrl(response.body);
+      return secureUrl.isEmpty ? _dataUrl(imageBytes) : secureUrl;
     } catch (_) {
-      return '';
+      return _dataUrl(imageBytes);
     }
   }
 
@@ -253,11 +276,13 @@ class AiDamageService {
   static Future<AiDamageResult> analyzeVehicleDamage({
     required Uint8List imageBytes,
     required String vehicleType,
+    String? fallbackCategory,
   }) async {
     if (!hasGemini || imageBytes.isEmpty) {
       return mockResult(
         vehicleType: vehicleType,
         seed: _seedFor(imageBytes),
+        fallbackCategory: fallbackCategory,
       );
     }
 
@@ -293,7 +318,7 @@ class AiDamageService {
               headers: {'Content-Type': 'application/json'},
               body: body,
             )
-            .timeout(const Duration(seconds: 20));
+            .timeout(const Duration(seconds: 12));
 
         if (response.statusCode == 200) {
           return parseGeminiBody(response.body);
@@ -308,6 +333,7 @@ class AiDamageService {
         return mockResult(
           vehicleType: vehicleType,
           seed: _seedFor(imageBytes),
+          fallbackCategory: fallbackCategory,
         );
       } catch (_) {
         // Try the next model, then fall back to the local assessment.
@@ -317,6 +343,7 @@ class AiDamageService {
     return mockResult(
       vehicleType: vehicleType,
       seed: _seedFor(imageBytes),
+      fallbackCategory: fallbackCategory,
     );
   }
 
@@ -345,6 +372,7 @@ class AiDamageService {
                   .map((part) => part['text'])
                   .whereType<String>()
                   .join('\n')
+                  .replaceAll(RegExp(r'```json|```'), '')
                   .trim();
               if (text.isNotEmpty) {
                 final jsonText = _extractJsonObject(text);
@@ -381,9 +409,16 @@ class AiDamageService {
   static AiDamageResult mockResult({
     required String vehicleType,
     int seed = 0,
+    String? fallbackCategory,
   }) {
     const types = ['Flat tire', 'Broken light', 'Body damage', 'Battery issue'];
-    final type = types[seed.abs() % types.length];
+    final type = (fallbackCategory != null &&
+            fallbackCategory.trim().isNotEmpty)
+        ? _detectedTypeForCategory(
+            _normalizeCategory(fallbackCategory),
+            seed,
+          )
+        : types[seed.abs() % types.length];
     final mapped = _categoryFor(type);
     final severity = _severityForSeed(seed);
     final tools = _defaultTools(type);
@@ -406,6 +441,21 @@ class AiDamageService {
     );
   }
 
+  static String _detectedTypeForCategory(String category, int seed) {
+    switch (category) {
+      case 'Puncture':
+        return 'Flat tire';
+      case 'Battery':
+        return 'Battery issue';
+      case 'Mechanic':
+        return seed.isEven ? 'Body damage' : 'Broken light';
+      case 'Tow':
+        return 'Body damage';
+      default:
+        return 'Body damage';
+    }
+  }
+
   // ── Internals ─────────────────────────────────────────────────────────
 
   static List<String> get _modelsToTry {
@@ -414,6 +464,8 @@ class AiDamageService {
         : geminiModel.trim();
     return <String>{
       configured,
+      'gemini-2.0-flash',
+      'gemini-1.5-flash',
       'gemini-3.5-flash',
       'gemini-3.8-flash',
     }.toList(growable: false);
@@ -444,6 +496,11 @@ Return ONLY one valid JSON object (no markdown, no explanation) with this exact 
 }
 Use Indian rupee amounts for estimatedPartsCost. Be conservative with severity and only report what is visible.
 ''';
+  }
+
+  static String _dataUrl(Uint8List bytes) {
+    if (bytes.isEmpty) return '';
+    return 'data:${_mimeTypeFor(bytes)};base64,${base64Encode(bytes)}';
   }
 
   static String _mimeTypeFor(Uint8List bytes) {

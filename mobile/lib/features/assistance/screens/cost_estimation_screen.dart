@@ -7,16 +7,19 @@ import '../../../routes/app_routes.dart';
 import '../../../services/ai_damage_service.dart';
 import '../../../services/cost_estimation_service.dart';
 import '../../../widgets/ai_damage_assessment_card.dart';
+import '../../../widgets/cost_breakdown_card.dart';
 import '../../../widgets/glass.dart';
 
 class CostEstimationScreen extends StatefulWidget {
   final VehicleModel? vehicle;
   final String? initialServiceType;
+  final bool isProvider;
 
   const CostEstimationScreen({
     super.key,
     this.vehicle,
     this.initialServiceType,
+    this.isProvider = false,
   });
 
   @override
@@ -26,11 +29,29 @@ class CostEstimationScreen extends StatefulWidget {
 class _CostEstimationScreenState extends State<CostEstimationScreen> {
   late String _vehicleType;
   late String _issueCategory;
-  double _distanceKm = 10;
-  double _laborHours = 1;
+  double _distanceKm = CostEstimationService.defaultDistanceKm;
+  double _laborHours = 1.5;
   double _partsEstimate = 0;
   final _partsController = TextEditingController();
   AiDamageAssessment? _aiAssessment;
+  int _aiVersion = 0;
+
+  bool get _isProvider => widget.isProvider;
+
+  double get _effectiveLaborHours {
+    if (_isProvider) return _laborHours;
+    final ai = _aiAssessment;
+    if (ai != null) return ai.result.estimatedLaborHours.clamp(0.0, 8.0);
+    return CostEstimationService.autoLaborHours(
+      _issueCategory,
+      severity: ai?.result.severity,
+    );
+  }
+
+  double get _effectivePartsEstimate {
+    if (_isProvider) return _partsEstimate;
+    return _aiAssessment?.result.estimatedPartsCost ?? 0;
+  }
 
   @override
   void initState() {
@@ -43,6 +64,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
             CostEstimationService.issueCategories.contains(widget.initialServiceType)
         ? widget.initialServiceType!
         : 'Mechanic';
+    _laborHours = CostEstimationService.autoLaborHours(_issueCategory);
   }
 
   @override
@@ -55,8 +77,8 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
         vehicleType: _vehicleType,
         issueCategory: _issueCategory,
         distanceKm: _distanceKm,
-        laborHours: _laborHours,
-        partsEstimate: _partsEstimate,
+        laborHours: _effectiveLaborHours,
+        partsEstimate: _effectivePartsEstimate,
       );
 
   void _applyAiAssessment(AiDamageAssessment assessment) {
@@ -76,22 +98,29 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
     });
   }
 
+  void _clearAiAssessment() {
+    _aiAssessment = null;
+    _aiVersion++;
+  }
+
   void _requestService() {
     final assessment = _aiAssessment;
     final adjustedAssessment = assessment?.copyWith(
       result: assessment.result.copyWith(
-        estimatedLaborHours: _laborHours,
-        estimatedPartsCost: _partsEstimate,
+        estimatedLaborHours: _effectiveLaborHours,
+        estimatedPartsCost: _effectivePartsEstimate,
       ),
     );
 
+    final estimate = _estimate;
     Navigator.pushNamed(
       context,
       AppRoutes.selectProblem,
       arguments: {
         'serviceType': _issueCategory,
         'vehicle': widget.vehicle,
-        'estimatedAmount': _estimate.total,
+        'estimatedAmount': estimate.total,
+        'costEstimate': estimate,
         'aiAssessment': adjustedAssessment,
       },
     );
@@ -107,15 +136,21 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
       body: GlassBackground(
         child: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
+            padding: EdgeInsets.fromLTRB(
+              16,
+              8,
+              16,
+              MediaQuery.of(context).viewInsets.bottom + 28,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildHeader(isDark),
                 const SizedBox(height: 16),
                 AiDamageAssessmentCard(
-                  key: ValueKey('ai-$_vehicleType'),
+                  key: ValueKey('ai-$_vehicleType-$_aiVersion'),
                   vehicleType: _vehicleType,
+                  selectedCategory: _issueCategory,
                   estimate: estimate,
                   onAssessment: _applyAiAssessment,
                 ),
@@ -124,13 +159,20 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
                 const SizedBox(height: 14),
                 _buildEstimateCard(isDark, estimate),
                 const SizedBox(height: 14),
-                _buildBreakdown(isDark, estimate),
+                CostBreakdownCard(
+                  estimate: estimate,
+                  isProvider: _isProvider,
+                ),
                 const SizedBox(height: 18),
                 GradientActionButton(
-                  label: 'Request this service',
-                  icon: Icons.arrow_forward_rounded,
+                  label: _isProvider ? 'Done' : 'Request this service',
+                  icon: _isProvider
+                      ? Icons.check_rounded
+                      : Icons.arrow_forward_rounded,
                   colors: const [Color(0xFF0045D1), Color(0xFF1A5CFF)],
-                  onPressed: _requestService,
+                  onPressed: _isProvider
+                      ? () => Navigator.pop(context)
+                      : _requestService,
                 ),
                 const SizedBox(height: 10),
                 Center(
@@ -162,7 +204,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: isDark ? Colors.white10 : Colors.white.withOpacity(0.8),
+              color: isDark ? Colors.white10 : Colors.white.withValues(alpha: 0.8),
               borderRadius: BorderRadius.circular(13),
               border: Border.all(
                 color: isDark ? Colors.white12 : Colors.white,
@@ -187,7 +229,11 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
                 ),
               ),
               Text(
-                'Estimate before you book',
+                _isProvider
+                    ? 'Provider pricing tool — labour and parts adjustable'
+                    : 'Auto-calculated before you book',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 10,
                   color: isDark
@@ -216,7 +262,8 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
           _label('Vehicle type', isDark),
           const SizedBox(height: 6),
           DropdownButtonFormField<String>(
-            value: _vehicleType,
+            key: ValueKey('vehicle-$_vehicleType'),
+            initialValue: _vehicleType,
             isExpanded: true,
             decoration: _inputDecoration(),
             items: CostEstimationService.vehicleMultipliers.keys
@@ -226,7 +273,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
               if (value != null) {
                 setState(() {
                   _vehicleType = value;
-                  _aiAssessment = null;
+                  _clearAiAssessment();
                 });
               }
             },
@@ -235,79 +282,164 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
           _label('Issue category', isDark),
           const SizedBox(height: 6),
           DropdownButtonFormField<String>(
-            value: _issueCategory,
+            key: ValueKey('category-$_issueCategory'),
+            initialValue: _issueCategory,
             isExpanded: true,
             decoration: _inputDecoration(),
             items: CostEstimationService.issueCategories
                 .map((type) => DropdownMenuItem(value: type, child: Text(type)))
                 .toList(),
             onChanged: (value) {
-              if (value != null) setState(() => _issueCategory = value);
+              if (value != null) {
+                setState(() {
+                  _issueCategory = value;
+                  _clearAiAssessment();
+                  _laborHours =
+                      CostEstimationService.autoLaborHours(value);
+                  _partsEstimate = 0;
+                  _partsController.clear();
+                });
+              }
             },
           ),
           const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(child: _label('Distance to breakdown', isDark)),
-              Text(
-                '${_distanceKm.toStringAsFixed(1)} km',
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.primary,
+          if (_isProvider) ...[
+            Row(
+              children: [
+                Expanded(child: _label('Distance to breakdown', isDark)),
+                const SizedBox(width: 8),
+                Text(
+                  '${_distanceKm.toStringAsFixed(1)} km',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.primary,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          Slider(
-            value: _distanceKm,
-            min: 0,
-            max: 50,
-            divisions: 50,
-            activeColor: AppColors.primary,
-            label: '${_distanceKm.toStringAsFixed(0)} km',
-            onChanged: (value) => setState(() => _distanceKm = value),
-          ),
-          Row(
-            children: [
-              Expanded(child: _label('Labor hours', isDark)),
-              Text(
-                '${_laborHours.toStringAsFixed(1)} h',
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.primary,
-                ),
-              ),
-            ],
-          ),
-          Slider(
-            value: _laborHours,
-            min: 0,
-            max: 8,
-            divisions: 16,
-            activeColor: AppColors.primary,
-            label: '${_laborHours.toStringAsFixed(1)} h',
-            onChanged: (value) => setState(() => _laborHours = value),
-          ),
-          const SizedBox(height: 4),
-          _label('Parts estimate (optional)', isDark),
-          const SizedBox(height: 6),
-          TextFormField(
-            controller: _partsController,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
-            ],
-            decoration: _inputDecoration(
-              hint: 'e.g. 850',
-              prefix: '₹ ',
+              ],
             ),
-            onChanged: (value) {
-              setState(() {
-                _partsEstimate = double.tryParse(value) ?? 0;
-              });
-            },
+            Slider(
+              value: _distanceKm,
+              min: 0,
+              max: 50,
+              divisions: 50,
+              activeColor: AppColors.primary,
+              label: '${_distanceKm.toStringAsFixed(0)} km',
+              onChanged: (value) => setState(() => _distanceKm = value),
+            ),
+            Row(
+              children: [
+                Expanded(child: _label('Labour hours (provider)', isDark)),
+                const SizedBox(width: 8),
+                Text(
+                  '${_laborHours.toStringAsFixed(1)} h',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ],
+            ),
+            Slider(
+              value: _laborHours,
+              min: 0,
+              max: 8,
+              divisions: 16,
+              activeColor: AppColors.primary,
+              label: '${_laborHours.toStringAsFixed(1)} h',
+              onChanged: (value) => setState(() => _laborHours = value),
+            ),
+            const SizedBox(height: 4),
+            _label('Parts estimate (provider)', isDark),
+            const SizedBox(height: 6),
+            TextFormField(
+              controller: _partsController,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
+              ],
+              decoration: _inputDecoration(
+                hint: 'e.g. 850',
+                prefix: '₹ ',
+              ),
+              onChanged: (value) {
+                setState(() {
+                  _partsEstimate = double.tryParse(value) ?? 0;
+                });
+              },
+            ),
+          ] else ...[
+            _readOnlyRow(
+              'Travel distance (auto)',
+              '${_distanceKm.toStringAsFixed(1)} km • '
+                  '₹${_estimate.distanceCharge.toStringAsFixed(0)}',
+              isDark,
+            ),
+            _readOnlyRow(
+              'Auto-allocated labour',
+              '${_effectiveLaborHours.toStringAsFixed(2)}h • '
+                  '₹${_estimate.laborCharge.toStringAsFixed(0)}',
+              isDark,
+            ),
+            _readOnlyRow(
+              'Estimated spare parts',
+              '₹${_effectivePartsEstimate.toStringAsFixed(0)}',
+              isDark,
+            ),
+            const SizedBox(height: 6),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Text(
+                'Labour and travel are calculated automatically. The provider '
+                'can adjust final labour and parts after on-site inspection.',
+                style: TextStyle(
+                  fontSize: 9,
+                  height: 1.35,
+                  color: AppColors.textSecondaryLight,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _readOnlyRow(String label, String value, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: isDark
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondaryLight,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            value,
+            maxLines: 1,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              color: AppColors.primary,
+            ),
           ),
         ],
       ),
@@ -326,7 +458,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.28),
+            color: AppColors.primary.withValues(alpha: 0.28),
             blurRadius: 26,
             offset: const Offset(0, 12),
           ),
@@ -342,10 +474,10 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.14),
+                    color: Colors.white.withValues(alpha: 0.14),
                     borderRadius: BorderRadius.circular(999),
                     border:
-                        Border.all(color: Colors.white.withOpacity(0.2)),
+                        Border.all(color: Colors.white.withValues(alpha: 0.2)),
                   ),
                   child: const Text(
                     'ESTIMATED RANGE',
@@ -395,7 +527,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
             spacing: 6,
             runSpacing: 6,
             children: [
-              _estimatePill('$_issueCategory', Icons.build_rounded),
+              _estimatePill(_issueCategory, Icons.build_rounded),
               _estimatePill(_vehicleType, Icons.directions_car_rounded),
               _estimatePill('${_distanceKm.toStringAsFixed(0)} km',
                   Icons.route_rounded),
@@ -411,7 +543,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
       constraints: const BoxConstraints(maxWidth: 260),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.13),
+        color: Colors.white.withValues(alpha: 0.13),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
@@ -429,116 +561,6 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
                 fontWeight: FontWeight.w700,
                 color: Colors.white,
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBreakdown(bool isDark, CostEstimate estimate) {
-    return GlassCard(
-      padding: const EdgeInsets.all(15),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'Estimate breakdown',
-                  style: TextStyle(
-                    fontFamily: 'Plus Jakarta Sans',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              Text(
-                'GST 18%',
-                style: TextStyle(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
-                  color: isDark
-                      ? AppColors.textSecondaryDark
-                      : AppColors.textSecondaryLight,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          _row('Emergency callout', estimate.baseCallout),
-          _row('${estimate.issueCategory} service base', estimate.categoryBase),
-          _row(
-            'Distance (${estimate.distanceKm.toStringAsFixed(1)} km)',
-            estimate.distanceCharge,
-          ),
-          _row('Labor (${estimate.laborHours.toStringAsFixed(1)} h)', estimate.laborCharge),
-          if (estimate.partsEstimate > 0)
-            _row('Parts estimate', estimate.partsEstimate),
-          _row('Vehicle multiplier', null, suffix: '×${estimate.vehicleMultiplier}'),
-          Divider(
-            color: isDark ? Colors.white12 : AppColors.dividerLight,
-            height: 18,
-          ),
-          _row('Subtotal', estimate.subtotal),
-          _row('GST 18%', estimate.taxAmount),
-          const SizedBox(height: 4),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                const Expanded(
-                  child: Text(
-                    'Estimated total',
-                    style: TextStyle(
-                      fontFamily: 'Plus Jakarta Sans',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-                Text(
-                  '₹${estimate.total.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                    fontFamily: 'Plus Jakarta Sans',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _row(String label, double? amount, {String? suffix}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 10.5,
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondaryLight,
-              ),
-            ),
-          ),
-          Text(
-            suffix ?? '₹${(amount ?? 0).toStringAsFixed(2)}',
-            style: const TextStyle(
-              fontSize: 10.5,
-              fontWeight: FontWeight.w700,
             ),
           ),
         ],
@@ -565,8 +587,8 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
       isDense: true,
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       fillColor: Theme.of(context).brightness == Brightness.dark
-          ? Colors.white.withOpacity(0.06)
-          : Colors.white.withOpacity(0.75),
+          ? Colors.white.withValues(alpha: 0.06)
+          : Colors.white.withValues(alpha: 0.75),
       filled: true,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),

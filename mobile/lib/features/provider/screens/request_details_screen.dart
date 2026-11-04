@@ -7,6 +7,7 @@ import '../../../services/location_service.dart';
 import '../../../services/service_request_service.dart';
 import '../../../services/phone_service.dart';
 import '../../../widgets/ai_mechanic_prep_card.dart';
+import '../../../widgets/customer_estimate_card.dart';
 import '../../../widgets/rr_button.dart';
 import '../../../widgets/rr_card.dart';
 import '../../../widgets/rr_map_view.dart';
@@ -115,7 +116,12 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
           children: [
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
+                padding: EdgeInsets.fromLTRB(
+                  20,
+                  20,
+                  20,
+                  20 + MediaQuery.of(context).viewInsets.bottom,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -123,9 +129,9 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
+                        color: AppColors.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+                        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
                       ),
                       child: Row(
                         children: [
@@ -165,6 +171,11 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
 
                     if (req != null && req.hasAiDamageReport) ...[
                       AiMechanicPrepCard(request: req),
+                      const SizedBox(height: 20),
+                    ],
+
+                    if (req != null) ...[
+                      CustomerEstimateCard(request: req),
                       const SizedBox(height: 20),
                     ],
 
@@ -256,12 +267,12 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: AppColors.warning.withOpacity(0.08),
+                          color: AppColors.warning.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.warning.withOpacity(0.3)),
+                          border: Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
                         ),
-                        child: Row(
-                          children: const [
+                        child: const Row(
+                          children: [
                             Icon(Icons.privacy_tip_rounded, color: AppColors.warning, size: 20),
                             SizedBox(width: 10),
                             Expanded(
@@ -338,12 +349,17 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
 
             // Action Buttons Bar
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.fromLTRB(
+                20,
+                20,
+                20,
+                20 + MediaQuery.of(context).viewInsets.bottom,
+              ),
               decoration: BoxDecoration(
                 color: isDark ? AppColors.surfaceDark : Colors.white,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
+                    color: Colors.black.withValues(alpha: 0.06),
                     blurRadius: 12,
                     offset: const Offset(0, -4),
                   ),

@@ -181,7 +181,7 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.15),
+                      color: Colors.black.withValues(alpha: 0.15),
                       blurRadius: 18,
                       offset: const Offset(0, 8),
                     ),
@@ -196,7 +196,7 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.2),
+                            color: AppColors.primary.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(14),
                           ),
                           child: Text(
@@ -282,9 +282,9 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
+                    const Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
+                      children: [
                         Text(
                           'Primary Emergency Vehicle',
                           style: TextStyle(
@@ -306,7 +306,7 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
                             child: CircularProgressIndicator(strokeWidth: 2))
                         : Switch(
                             value: vehicle.isDefault,
-                            activeColor: AppColors.primary,
+                            activeThumbColor: AppColors.primary,
                             onChanged: vehicle.isDefault
                                 ? null // can't un-default without choosing another
                                 : (v) => _setDefault(v),

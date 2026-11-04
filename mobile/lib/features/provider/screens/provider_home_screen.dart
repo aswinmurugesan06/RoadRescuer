@@ -12,6 +12,7 @@ import '../../../services/provider_service.dart';
 import '../../../services/service_request_service.dart';
 import '../../../services/socket_service.dart';
 import '../../../widgets/app_logo.dart';
+import '../../../widgets/damage_photo_view.dart';
 import '../../../widgets/glass.dart';
 import 'provider_earnings_screen.dart';
 
@@ -76,39 +77,48 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     if (_routeSubscribed) appRouteObserver.unsubscribe(this);
-    SocketService.instance.clearProviderListeners();
+    try {
+      SocketService.instance.clearProviderListeners();
+    } catch (_) {
+      // Firebase may be unavailable during tests or shutdown.
+    }
     super.dispose();
   }
 
   Future<void> _initSocket() async {
-    await SocketService.instance.connect();
-    SocketService.instance.onNewRequest = (data) {
-      if (_isOnline && mounted) {
-        _loadAvailableRequests();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('New emergency request available nearby!'),
-            backgroundColor: AppColors.primary,
-            duration: Duration(seconds: 3),
-          ),
-        );
-      }
-    };
+    try {
+      await SocketService.instance.connect();
+      SocketService.instance.onNewRequest = (data) {
+        if (_isOnline && mounted) {
+          _loadAvailableRequests();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('New emergency request available nearby!'),
+              backgroundColor: AppColors.primary,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+      };
+    } catch (_) {
+      // Realtime socket is optional; Firestore polling still works.
+    }
   }
 
   Future<void> _loadProfile() async {
     try {
       final account = await ProviderService.getProfile();
       if (mounted) {
+        final availability = account.providerProfile.availability;
         setState(() {
           _account = account;
-          _isOnline = account.providerProfile.availability == 'AVAILABLE';
-          if (!_isOnline) {
+          _isOnline = availability != 'OFFLINE';
+          if (availability != 'AVAILABLE') {
             _availableRequests = [];
             _isLoadingRequests = false;
           }
         });
-        if (account.providerProfile.availability == 'AVAILABLE') {
+        if (availability == 'AVAILABLE') {
           _loadAvailableRequests();
         }
       }
@@ -117,8 +127,11 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen>
     }
   }
 
+  bool get _isAvailable =>
+      _account?.providerProfile.availability == 'AVAILABLE';
+
   Future<void> _loadAvailableRequests() async {
-    if (!_isOnline) {
+    if (!_isOnline || !_isAvailable) {
       if (mounted) setState(() => _availableRequests = []);
       return;
     }
@@ -156,6 +169,39 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen>
     return 'Nearby';
   }
 
+  Widget _aiPill(String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.09),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.16)),
+      ),
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          fontSize: 7.5,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.2,
+          color: color,
+        ),
+      ),
+    );
+  }
+
+  Color _aiSeverityColor(String? severity) {
+    switch ((severity ?? '').toLowerCase()) {
+      case 'severe':
+        return AppColors.danger;
+      case 'low':
+        return AppColors.success;
+      default:
+        return AppColors.warning;
+    }
+  }
+
   double _haversine(double lat1, double lon1, double lat2, double lon2) {
     const earthRadius = 6371.0;
     final dLat = (lat2 - lat1) * math.pi / 180;
@@ -190,7 +236,7 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen>
       final updated = await ProviderService.setAvailability(target);
       if (mounted) {
         setState(() {
-          _isOnline = updated.availability == 'AVAILABLE';
+          _isOnline = updated.availability != 'OFFLINE';
           if (_account != null) {
             _account = ProviderAccountModel.fromJson({
               'id': _account!.id,
@@ -450,6 +496,7 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen>
                     onTap: () => Navigator.pushNamed(
                       context,
                       AppRoutes.costEstimator,
+                      arguments: {'isProvider': true},
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -518,10 +565,10 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen>
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.12),
+              color: AppColors.primary.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: isDark ? Colors.white.withOpacity(0.08) : Colors.white,
+                color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.white,
               ),
             ),
             child: Center(
@@ -547,12 +594,12 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen>
         height: 42,
         decoration: BoxDecoration(
           color: Theme.of(context).brightness == Brightness.dark
-              ? Colors.white.withOpacity(0.06)
-              : Colors.white.withOpacity(0.72),
+              ? Colors.white.withValues(alpha: 0.06)
+              : Colors.white.withValues(alpha: 0.72),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: Theme.of(context).brightness == Brightness.dark
-                ? Colors.white.withOpacity(0.08)
+                ? Colors.white.withValues(alpha: 0.08)
                 : Colors.white,
           ),
         ),
@@ -588,7 +635,7 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen>
                   borderRadius: BorderRadius.circular(17),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primary.withOpacity(0.25),
+                      color: AppColors.primary.withValues(alpha: 0.25),
                       blurRadius: 14,
                       offset: const Offset(0, 5),
                     ),
@@ -632,16 +679,16 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen>
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
                     color: _isOnline
-                        ? AppColors.success.withOpacity(0.12)
+                        ? AppColors.success.withValues(alpha: 0.12)
                         : (isDark
-                            ? Colors.white.withOpacity(0.06)
-                            : Colors.white.withOpacity(0.8)),
+                            ? Colors.white.withValues(alpha: 0.06)
+                            : Colors.white.withValues(alpha: 0.8)),
                     borderRadius: BorderRadius.circular(999),
                     border: Border.all(
                       color: _isOnline
-                          ? AppColors.success.withOpacity(0.3)
+                          ? AppColors.success.withValues(alpha: 0.3)
                           : (isDark
-                              ? Colors.white.withOpacity(0.08)
+                              ? Colors.white.withValues(alpha: 0.08)
                               : Colors.white),
                     ),
                   ),
@@ -659,7 +706,7 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen>
                           boxShadow: _isOnline
                               ? [
                                   BoxShadow(
-                                    color: AppColors.success.withOpacity(0.5),
+                                    color: AppColors.success.withValues(alpha: 0.5),
                                     blurRadius: 8,
                                     spreadRadius: 2,
                                   ),
@@ -671,13 +718,17 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen>
                       Text(
                         _isTogglingAvailability
                             ? '…'
-                            : (_isOnline ? 'ONLINE' : 'OFFLINE'),
+                            : (_isOnline
+                                ? (_isAvailable ? 'ONLINE' : 'ON A JOB')
+                                : 'OFFLINE'),
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 0.6,
                           color: _isOnline
-                              ? AppColors.success
+                              ? (_isAvailable
+                                  ? AppColors.success
+                                  : AppColors.warning)
                               : secondary,
                         ),
                       ),
@@ -715,7 +766,7 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen>
                       ),
                     ),
                   ),
-                  Text(
+                  const Text(
                     'Edit',
                     style: TextStyle(
                       fontSize: 10,
@@ -750,11 +801,11 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen>
         padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 4),
         decoration: BoxDecoration(
           color: isDark
-              ? Colors.white.withOpacity(0.04)
-              : Colors.white.withOpacity(0.55),
+              ? Colors.white.withValues(alpha: 0.04)
+              : Colors.white.withValues(alpha: 0.55),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
+            color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
           ),
         ),
         child: Column(
@@ -790,17 +841,17 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen>
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: AppColors.warning.withOpacity(0.14),
+            color: AppColors.warning.withValues(alpha: 0.14),
             blurRadius: 28,
             offset: const Offset(0, 10),
           ),
         ],
       ),
       child: GlassCard(
-        borderColor: AppColors.warning.withOpacity(0.35),
+        borderColor: AppColors.warning.withValues(alpha: 0.35),
         color: isDark
-            ? AppColors.cardDark.withOpacity(0.92)
-            : Colors.white.withOpacity(0.86),
+            ? AppColors.cardDark.withValues(alpha: 0.92)
+            : Colors.white.withValues(alpha: 0.86),
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -811,10 +862,10 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen>
                   padding:
                       const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
                   decoration: BoxDecoration(
-                    color: AppColors.warning.withOpacity(0.12),
+                    color: AppColors.warning.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(999),
                     border: Border.all(
-                      color: AppColors.warning.withOpacity(0.25),
+                      color: AppColors.warning.withValues(alpha: 0.25),
                     ),
                   ),
                   child: const Row(
@@ -867,6 +918,8 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen>
                     children: [
                       Text(
                         '${request.serviceType} assistance',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontFamily: 'Plus Jakarta Sans',
                           fontSize: 18,
@@ -898,13 +951,17 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen>
                               ),
                             ),
                           ),
-                          Text(
-                            '• ${request.vehicleModel}',
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: isDark
-                                  ? AppColors.textSecondaryDark
-                                  : AppColors.textSecondaryLight,
+                          Flexible(
+                            child: Text(
+                              '• ${request.vehicleModel}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: isDark
+                                    ? AppColors.textSecondaryDark
+                                    : AppColors.textSecondaryLight,
+                              ),
                             ),
                           ),
                         ],
@@ -916,6 +973,8 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen>
                   request.totalAmount > 0
                       ? '₹${request.totalAmount.toStringAsFixed(0)}'
                       : 'Estimate',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontFamily: 'Plus Jakarta Sans',
                     fontSize: 18,
@@ -926,6 +985,59 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen>
               ],
             ),
             const SizedBox(height: 10),
+            if (request.hasAiDamageReport) ...[
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  DamagePhotoView(
+                    imageUrl: request.damageImageUrl,
+                    width: 64,
+                    height: 64,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          request.aiDetectedIssue ?? 'AI damage report',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            color: isDark
+                                ? Colors.white
+                                : AppColors.textPrimaryLight,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Wrap(
+                          spacing: 5,
+                          runSpacing: 4,
+                          children: [
+                            _aiPill(
+                              (request.aiSeverity ?? 'AI').toUpperCase(),
+                              _aiSeverityColor(request.aiSeverity),
+                            ),
+                            _aiPill(
+                              '${request.requiredTools.length} tools',
+                              AppColors.primary,
+                            ),
+                            _aiPill(
+                              '${request.recommendedParts.length} parts',
+                              AppColors.tertiary,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+            ],
             GlassPill(
               padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
               child: Row(
@@ -945,14 +1057,18 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen>
                       ),
                     ),
                   ),
-                  Text(
-                    '${_distanceLabel(request)} • ~8 min',
-                    style: TextStyle(
-                      fontSize: 9.5,
-                      fontWeight: FontWeight.w700,
-                      color: isDark
-                          ? AppColors.textSecondaryDark
-                          : AppColors.textSecondaryLight,
+                  Flexible(
+                    child: Text(
+                      '${_distanceLabel(request)} • ~8 min',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w700,
+                        color: isDark
+                            ? AppColors.textSecondaryDark
+                            : AppColors.textSecondaryLight,
+                      ),
                     ),
                   ),
                 ],
@@ -971,7 +1087,7 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen>
                       foregroundColor: AppColors.textSecondaryLight,
                       side: BorderSide(
                         color: isDark
-                            ? Colors.white.withOpacity(0.12)
+                            ? Colors.white.withValues(alpha: 0.12)
                             : AppColors.borderLight,
                       ),
                     ),
@@ -1016,11 +1132,19 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen>
       ),
       child: Row(
         children: [
-          GlassIconBox(
-            icon: _serviceIcon(request.serviceType),
-            size: 44,
-            iconSize: 22,
-          ),
+          if (request.hasAiDamageReport)
+            DamagePhotoView(
+              imageUrl: request.damageImageUrl,
+              width: 44,
+              height: 44,
+              borderRadius: BorderRadius.circular(11),
+            )
+          else
+            GlassIconBox(
+              icon: _serviceIcon(request.serviceType),
+              size: 44,
+              iconSize: 22,
+            ),
           const SizedBox(width: 11),
           Expanded(
             child: Column(
@@ -1028,6 +1152,8 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen>
               children: [
                 Text(
                   request.serviceType,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontFamily: 'Plus Jakarta Sans',
                     fontSize: 13,
@@ -1047,6 +1173,23 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen>
                         : AppColors.textSecondaryLight,
                   ),
                 ),
+                if (request.hasAiDamageReport) ...[
+                  const SizedBox(height: 3),
+                  Wrap(
+                    spacing: 5,
+                    runSpacing: 3,
+                    children: [
+                      _aiPill(
+                        (request.aiSeverity ?? 'AI').toUpperCase(),
+                        _aiSeverityColor(request.aiSeverity),
+                      ),
+                      _aiPill(
+                        '${request.requiredTools.length} tools',
+                        AppColors.primary,
+                      ),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 3),
                 Text(
                   request.totalAmount > 0

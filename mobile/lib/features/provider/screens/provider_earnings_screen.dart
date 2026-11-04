@@ -149,7 +149,7 @@ class _ProviderEarningsScreenState extends State<ProviderEarningsScreen> {
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.success.withOpacity(0.25),
+                        color: AppColors.success.withValues(alpha: 0.25),
                         blurRadius: 16,
                         offset: const Offset(0, 6),
                       ),
@@ -260,7 +260,7 @@ class _ProviderEarningsScreenState extends State<ProviderEarningsScreen> {
                             Container(
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: AppColors.success.withOpacity(0.12),
+                                color: AppColors.success.withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: const Icon(

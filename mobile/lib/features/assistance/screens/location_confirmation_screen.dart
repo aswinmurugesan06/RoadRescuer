@@ -4,6 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../models/vehicle_model.dart';
 import '../../../models/service_request_model.dart';
 import '../../../services/ai_damage_service.dart';
+import '../../../services/cost_estimation_service.dart';
 import '../../../services/location_service.dart';
 import '../../../services/service_request_service.dart';
 import '../../../widgets/rr_button.dart';
@@ -17,6 +18,7 @@ class LocationConfirmationScreen extends StatefulWidget {
   final VehicleModel? vehicle;
   final double? estimatedAmount;
   final AiDamageAssessment? aiAssessment;
+  final CostEstimate? costEstimate;
 
   const LocationConfirmationScreen({
     super.key,
@@ -25,6 +27,7 @@ class LocationConfirmationScreen extends StatefulWidget {
     this.vehicle,
     this.estimatedAmount,
     this.aiAssessment,
+    this.costEstimate,
   });
 
   @override
@@ -163,6 +166,9 @@ class _LocationConfirmationScreenState
             widget.aiAssessment?.result.estimatedLaborHours,
         estimatedPartsCost: widget.aiAssessment?.result.estimatedPartsCost,
         mechanicPrepNote: widget.aiAssessment?.result.mechanicPrepNote,
+        estimatedDistanceKm: widget.costEstimate?.distanceKm,
+        estimatedDistanceCharge: widget.costEstimate?.distanceCharge,
+        estimatedLaborCharge: widget.costEstimate?.laborCharge,
       );
 
       if (!mounted) return;
@@ -226,9 +232,9 @@ class _LocationConfirmationScreenState
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.danger.withOpacity(0.08),
+        color: AppColors.danger.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.danger.withOpacity(0.35)),
+        border: Border.all(color: AppColors.danger.withValues(alpha: 0.35)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -315,7 +321,12 @@ class _LocationConfirmationScreenState
 
                     // Content below map
                     Padding(
-                      padding: const EdgeInsets.all(20),
+                      padding: EdgeInsets.fromLTRB(
+                        20,
+                        20,
+                        20,
+                        20 + MediaQuery.of(context).viewInsets.bottom,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -336,7 +347,7 @@ class _LocationConfirmationScreenState
                                         color: (_deviceLocation != null
                                                 ? AppColors.success
                                                 : AppColors.primary)
-                                            .withOpacity(0.12),
+                                            .withValues(alpha: 0.12),
                                         borderRadius:
                                             BorderRadius.circular(10),
                                       ),
@@ -386,7 +397,7 @@ class _LocationConfirmationScreenState
                                                       vertical: 2),
                                                   decoration: BoxDecoration(
                                                     color: AppColors.success
-                                                        .withOpacity(0.12),
+                                                        .withValues(alpha: 0.12),
                                                     borderRadius:
                                                         BorderRadius.circular(
                                                             6),
@@ -515,12 +526,17 @@ class _LocationConfirmationScreenState
 
             // Bottom CTA
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.fromLTRB(
+                20,
+                20,
+                20,
+                20 + MediaQuery.of(context).viewInsets.bottom,
+              ),
               decoration: BoxDecoration(
                 color: isDark ? AppColors.surfaceDark : Colors.white,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
+                    color: Colors.black.withValues(alpha: 0.06),
                     blurRadius: 12,
                     offset: const Offset(0, -4),
                   ),

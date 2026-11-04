@@ -191,10 +191,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: AppColors.danger.withOpacity(0.08),
+                          color: AppColors.danger.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: AppColors.danger.withOpacity(0.3),
+                            color: AppColors.danger.withValues(alpha: 0.3),
                           ),
                         ),
                         child: Row(
@@ -275,8 +275,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       subtitle: 'Visa, MasterCard, RuPay, Maestro',
                       icon: Icons.credit_card_rounded,
                       color: AppColors.secondary,
-                      expandedChild: Column(
-                        children: const [
+                      expandedChild: const Column(
+                        children: [
                           SizedBox(height: 12),
                           RRTextField(
                             label: 'Card Number',
@@ -299,9 +299,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     const SizedBox(height: 28),
 
                     // Security assurance
-                    Row(
+                    const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
+                      children: [
                         Icon(Icons.lock_rounded,
                             size: 16, color: AppColors.success),
                         SizedBox(width: 8),
@@ -326,7 +326,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 color: isDark ? AppColors.surfaceDark : Colors.white,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
+                    color: Colors.black.withValues(alpha: 0.06),
                     blurRadius: 12,
                     offset: const Offset(0, -4),
                   ),
@@ -375,7 +375,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.12),
+                  color: color.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: color, size: 24),
@@ -404,11 +404,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   ],
                 ),
               ),
-              Radio<String>(
-                value: id,
-                groupValue: _selectedMethod,
-                activeColor: color,
-                onChanged: (val) => setState(() => _selectedMethod = val!),
+              Icon(
+                isSelected
+                    ? Icons.radio_button_checked_rounded
+                    : Icons.radio_button_unchecked_rounded,
+                color: color,
+                size: 22,
               ),
             ],
           ),

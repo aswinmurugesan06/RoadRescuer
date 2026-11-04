@@ -110,10 +110,10 @@ class _RoleSelectorScreenState extends State<RoleSelectorScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1E293B).withOpacity(0.6),
+                  color: const Color(0xFF1E293B).withValues(alpha: 0.6),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: Colors.white.withOpacity(0.08),
+                    color: Colors.white.withValues(alpha: 0.08),
                   ),
                 ),
                 child: Row(
@@ -172,14 +172,14 @@ class _RoleCard extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(18),
-        splashColor: accentColor.withOpacity(0.12),
-        highlightColor: accentColor.withOpacity(0.06),
+        splashColor: accentColor.withValues(alpha: 0.12),
+        highlightColor: accentColor.withValues(alpha: 0.06),
         child: Container(
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: accentColor.withOpacity(0.35),
+              color: accentColor.withValues(alpha: 0.35),
               width: 1.2,
             ),
           ),
@@ -192,10 +192,10 @@ class _RoleCard extends StatelessWidget {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: accentColor.withOpacity(0.14),
+                      color: accentColor.withValues(alpha: 0.14),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: accentColor.withOpacity(0.25),
+                        color: accentColor.withValues(alpha: 0.25),
                         width: 1,
                       ),
                     ),
@@ -236,10 +236,10 @@ class _RoleCard extends StatelessWidget {
                     width: 34,
                     height: 34,
                     decoration: BoxDecoration(
-                      color: accentColor.withOpacity(0.15),
+                      color: accentColor.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: accentColor.withOpacity(0.3),
+                        color: accentColor.withValues(alpha: 0.3),
                         width: 1,
                       ),
                     ),

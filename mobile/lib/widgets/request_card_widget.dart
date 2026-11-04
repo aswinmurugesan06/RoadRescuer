@@ -165,7 +165,7 @@ class ProviderCardWidget extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: _typeColor.withOpacity(0.1),
+                  color: _typeColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Center(child: Text(_typeIcon, style: const TextStyle(fontSize: 22))),

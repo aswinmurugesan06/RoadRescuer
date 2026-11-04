@@ -73,6 +73,9 @@ class ServiceRequestModel {
   final double? estimatedLaborHours;
   final double? estimatedPartsCost;
   final String? mechanicPrepNote;
+  final double? estimatedDistanceKm;
+  final double? estimatedDistanceCharge;
+  final double? estimatedLaborCharge;
 
   const ServiceRequestModel({
     required this.id,
@@ -107,6 +110,9 @@ class ServiceRequestModel {
     this.estimatedLaborHours,
     this.estimatedPartsCost,
     this.mechanicPrepNote,
+    this.estimatedDistanceKm,
+    this.estimatedDistanceCharge,
+    this.estimatedLaborCharge,
   });
 
   bool get hasAiDamageReport =>
@@ -206,6 +212,12 @@ class ServiceRequestModel {
           (json['estimatedLaborHours'] as num?)?.toDouble(),
       estimatedPartsCost: (json['estimatedPartsCost'] as num?)?.toDouble(),
       mechanicPrepNote: json['mechanicPrepNote'] as String?,
+      estimatedDistanceKm:
+          (json['estimatedDistanceKm'] as num?)?.toDouble(),
+      estimatedDistanceCharge:
+          (json['estimatedDistanceCharge'] as num?)?.toDouble(),
+      estimatedLaborCharge:
+          (json['estimatedLaborCharge'] as num?)?.toDouble(),
     );
   }
 
@@ -242,6 +254,9 @@ class ServiceRequestModel {
     double? estimatedLaborHours,
     double? estimatedPartsCost,
     String? mechanicPrepNote,
+    double? estimatedDistanceKm,
+    double? estimatedDistanceCharge,
+    double? estimatedLaborCharge,
   }) {
     return ServiceRequestModel(
       id: id ?? this.id,
@@ -277,6 +292,12 @@ class ServiceRequestModel {
           estimatedLaborHours ?? this.estimatedLaborHours,
       estimatedPartsCost: estimatedPartsCost ?? this.estimatedPartsCost,
       mechanicPrepNote: mechanicPrepNote ?? this.mechanicPrepNote,
+      estimatedDistanceKm:
+          estimatedDistanceKm ?? this.estimatedDistanceKm,
+      estimatedDistanceCharge:
+          estimatedDistanceCharge ?? this.estimatedDistanceCharge,
+      estimatedLaborCharge:
+          estimatedLaborCharge ?? this.estimatedLaborCharge,
     );
   }
 

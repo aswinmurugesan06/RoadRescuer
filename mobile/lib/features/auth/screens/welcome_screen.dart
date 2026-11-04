@@ -51,22 +51,22 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 colors: [Color(0xFF1A1A2E), Color(0xFF16213E), Color(0xFF0F3460)],
               ),
             ),
-            child: SafeArea(
+            child: const SafeArea(
               bottom: false,
               child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const AppLogo.splash(
+                    AppLogo.splash(
                       height: 140,
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: 24),
                     // Service pills
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       alignment: WrapAlignment.center,
-                      children: const [
+                      children: [
                         _ServicePill(emoji: '🔧', label: 'Mechanic'),
                         _ServicePill(emoji: '🛞', label: 'Tyre'),
                         _ServicePill(emoji: '🚚', label: 'Tow Truck'),
@@ -166,8 +166,8 @@ class _ServicePill extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        color: Colors.white.withOpacity(0.1),
-        border: Border.all(color: Colors.white.withOpacity(0.15)),
+        color: Colors.white.withValues(alpha: 0.1),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

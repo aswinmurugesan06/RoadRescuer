@@ -180,12 +180,12 @@ class _LoginScreenState extends State<LoginScreen> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-        title: Row(
+        title: const Row(
           children: [
-            const Icon(Icons.crisis_alert_rounded,
+            Icon(Icons.crisis_alert_rounded,
                 color: _secondaryContainer, size: 24),
-            const SizedBox(width: 8),
-            const Expanded(
+            SizedBox(width: 8),
+            Expanded(
               child: Text(
                 'Emergency SOS',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
@@ -258,7 +258,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 460),
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+                        padding: EdgeInsets.fromLTRB(
+                          20,
+                          8,
+                          20,
+                          MediaQuery.of(context).viewInsets.bottom + 28,
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
@@ -311,12 +316,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                 decoration: BoxDecoration(
-                  color: _surfaceContainer.withOpacity(0.72),
+                  color: _surfaceContainer.withValues(alpha: 0.72),
                   borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: Colors.white.withOpacity(0.85)),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.85)),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF0F172A).withOpacity(0.05),
+                      color: const Color(0xFF0F172A).withValues(alpha: 0.05),
                       blurRadius: 14,
                       offset: const Offset(0, 5),
                     ),
@@ -340,7 +345,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       '  •  ',
                       style: TextStyle(
                         fontSize: 8.5,
-                        color: _outlineVariant.withOpacity(0.9),
+                        color: _outlineVariant.withValues(alpha: 0.9),
                       ),
                     ),
                     const Text(
@@ -367,7 +372,7 @@ class _LoginScreenState extends State<LoginScreen> {
     required VoidCallback onTap,
   }) {
     return Material(
-      color: Colors.white.withOpacity(0.75),
+      color: Colors.white.withValues(alpha: 0.75),
       shape: const CircleBorder(),
       child: InkWell(
         customBorder: const CircleBorder(),
@@ -394,7 +399,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 borderRadius: BorderRadius.circular(18),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.26),
+                    color: AppColors.primary.withValues(alpha: 0.26),
                     blurRadius: 26,
                     offset: const Offset(0, 12),
                   ),
@@ -418,7 +423,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   border: Border.all(color: Colors.white, width: 2),
                   boxShadow: [
                     BoxShadow(
-                      color: _secondaryContainer.withOpacity(0.35),
+                      color: _secondaryContainer.withValues(alpha: 0.35),
                       blurRadius: 8,
                       offset: const Offset(0, 3),
                     ),
@@ -498,7 +503,7 @@ class _LoginScreenState extends State<LoginScreen> {
         borderRadius: BorderRadius.circular(999),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F172A).withOpacity(0.05),
+            color: const Color(0xFF0F172A).withValues(alpha: 0.05),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -543,7 +548,7 @@ class _LoginScreenState extends State<LoginScreen> {
           boxShadow: selected
               ? [
                   BoxShadow(
-                    color: const Color(0xFF0F172A).withOpacity(0.08),
+                    color: const Color(0xFF0F172A).withValues(alpha: 0.08),
                     blurRadius: 10,
                     offset: const Offset(0, 3),
                   ),
@@ -583,8 +588,8 @@ class _LoginScreenState extends State<LoginScreen> {
     return GlassCard(
       padding: const EdgeInsets.all(18),
       borderRadius: 24,
-      color: Colors.white.withOpacity(0.84),
-      borderColor: Colors.white.withOpacity(0.92),
+      color: Colors.white.withValues(alpha: 0.84),
+      borderColor: Colors.white.withValues(alpha: 0.92),
       child: Form(
         key: _formKey,
         child: Column(
@@ -683,7 +688,7 @@ class _LoginScreenState extends State<LoginScreen> {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white.withOpacity(0.9)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.9)),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -716,7 +721,7 @@ class _LoginScreenState extends State<LoginScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         shape: BoxShape.circle,
-        border: Border.all(color: _outlineVariant.withOpacity(0.6)),
+        border: Border.all(color: _outlineVariant.withValues(alpha: 0.6)),
       ),
       child: const Center(
         child: Text(
@@ -745,7 +750,7 @@ class _LoginScreenState extends State<LoginScreen> {
               fontSize: 8.5,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.7,
-              color: AppColors.textHintLight.withOpacity(0.95),
+              color: AppColors.textHintLight.withValues(alpha: 0.95),
             ),
           ),
         ),
@@ -797,8 +802,8 @@ class _LoginScreenState extends State<LoginScreen> {
         validator: Validators.email,
         decoration: _fieldDecoration(
           hint: 'driver@roadrescue.io',
-          prefix: Padding(
-            padding: const EdgeInsets.only(left: 12, right: 8),
+          prefix: const Padding(
+            padding: EdgeInsets.only(left: 12, right: 8),
             child: Icon(
               Icons.mail_outline_rounded,
               size: 18,
@@ -862,8 +867,8 @@ class _LoginScreenState extends State<LoginScreen> {
       onFieldSubmitted: (_) => _login(),
       decoration: _fieldDecoration(
         hint: 'Enter your password',
-        prefix: Padding(
-          padding: const EdgeInsets.only(left: 12, right: 8),
+        prefix: const Padding(
+          padding: EdgeInsets.only(left: 12, right: 8),
           child: Icon(
             Icons.lock_outline_rounded,
             size: 18,
@@ -913,7 +918,7 @@ class _LoginScreenState extends State<LoginScreen> {
       contentPadding:
           const EdgeInsets.symmetric(horizontal: 12, vertical: 15),
       border: border(Colors.transparent),
-      enabledBorder: border(Colors.white.withOpacity(0.9)),
+      enabledBorder: border(Colors.white.withValues(alpha: 0.9)),
       focusedBorder: border(AppColors.primary, 1.5),
       errorBorder: border(AppColors.danger),
       focusedErrorBorder: border(AppColors.danger, 1.5),
@@ -991,7 +996,7 @@ class _LoginScreenState extends State<LoginScreen> {
             borderRadius: BorderRadius.circular(14),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withOpacity(0.28),
+                color: AppColors.primary.withValues(alpha: 0.28),
                 blurRadius: 22,
                 offset: const Offset(0, 10),
               ),
@@ -1040,7 +1045,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _buildBiometricButton() {
     return Material(
-      color: _surfaceContainerHigh.withOpacity(0.6),
+      color: _surfaceContainerHigh.withValues(alpha: 0.6),
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
@@ -1050,13 +1055,13 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Container(
           height: 44,
           alignment: Alignment.center,
-          child: Row(
+          child: const Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.fingerprint_rounded,
+              Icon(Icons.fingerprint_rounded,
                   size: 20, color: AppColors.primary),
-              const SizedBox(width: 7),
-              const Flexible(
+              SizedBox(width: 7),
+              Flexible(
                 child: Text(
                   'Face ID / Touch ID Fast Pass',
                   maxLines: 1,
@@ -1081,12 +1086,12 @@ class _LoginScreenState extends State<LoginScreen> {
     return Container(
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: _secondaryContainer.withOpacity(0.13),
+        color: _secondaryContainer.withValues(alpha: 0.13),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: _secondaryContainer.withOpacity(0.18)),
+        border: Border.all(color: _secondaryContainer.withValues(alpha: 0.18)),
         boxShadow: [
           BoxShadow(
-            color: _secondaryContainer.withOpacity(0.08),
+            color: _secondaryContainer.withValues(alpha: 0.08),
             blurRadius: 22,
             offset: const Offset(0, 10),
           ),
@@ -1103,7 +1108,7 @@ class _LoginScreenState extends State<LoginScreen> {
               borderRadius: BorderRadius.circular(13),
               boxShadow: [
                 BoxShadow(
-                  color: _secondaryContainer.withOpacity(0.32),
+                  color: _secondaryContainer.withValues(alpha: 0.32),
                   blurRadius: 12,
                   offset: const Offset(0, 5),
                 ),
@@ -1212,12 +1217,12 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildTrustFooter() {
     return Column(
       children: [
-        Wrap(
+        const Wrap(
           alignment: WrapAlignment.center,
           crossAxisAlignment: WrapCrossAlignment.center,
           spacing: 10,
           runSpacing: 6,
-          children: const [
+          children: [
             _TrustBadge(
               icon: Icons.lock_outline_rounded,
               label: '256-Bit TLS Protected',
@@ -1328,7 +1333,7 @@ class _PulseDot extends StatelessWidget {
             width: 14,
             height: 14,
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.18),
+              color: AppColors.primary.withValues(alpha: 0.18),
               shape: BoxShape.circle,
             ),
           ),

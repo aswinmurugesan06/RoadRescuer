@@ -42,7 +42,7 @@ class RRLoadingOverlay extends StatelessWidget {
         child,
         if (isLoading)
           Container(
-            color: Colors.black.withOpacity(0.45),
+            color: Colors.black.withValues(alpha: 0.45),
             child: Center(
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
@@ -100,10 +100,10 @@ class RREmptyState extends StatelessWidget {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.08),
+                color: AppColors.primary.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, size: 38, color: AppColors.primary.withOpacity(0.6)),
+              child: Icon(icon, size: 38, color: AppColors.primary.withValues(alpha: 0.6)),
             ),
             const SizedBox(height: 20),
             Text(

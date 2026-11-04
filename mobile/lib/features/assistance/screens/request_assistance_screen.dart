@@ -7,6 +7,7 @@ import '../../../services/ai_damage_service.dart';
 import '../../../services/cost_estimation_service.dart';
 import '../../../services/vehicle_service.dart';
 import '../../../widgets/ai_damage_assessment_card.dart';
+import '../../../widgets/cost_breakdown_card.dart';
 import '../../../widgets/rr_button.dart';
 import '../../../widgets/rr_card.dart';
 
@@ -22,6 +23,7 @@ class _RequestAssistanceScreenState extends State<RequestAssistanceScreen> {
   late VehicleModel _selectedVehicle;
   String _selectedService = 'Mechanic';
   AiDamageAssessment? _aiAssessment;
+  int _aiVersion = 0;
 
   final List<Map<String, dynamic>> _services = [
     {
@@ -73,6 +75,7 @@ class _RequestAssistanceScreenState extends State<RequestAssistanceScreen> {
     setState(() {
       _selectedVehicle = vehicle;
       _aiAssessment = null;
+      _aiVersion++;
     });
   }
 
@@ -87,15 +90,29 @@ class _RequestAssistanceScreenState extends State<RequestAssistanceScreen> {
     });
   }
 
-  CostEstimate? get _aiEstimate {
+  void _selectService(String service) {
+    setState(() {
+      _selectedService = service;
+      if (_aiAssessment != null &&
+          _aiAssessment!.result.mappedCategory != service) {
+        _aiAssessment = null;
+        _aiVersion++;
+      }
+    });
+  }
+
+  CostEstimate get _estimate {
     final assessment = _aiAssessment;
-    if (assessment == null) return null;
     return CostEstimationService.estimate(
       vehicleType: _selectedVehicle.type,
       issueCategory: _selectedService,
-      distanceKm: CostEstimationService.freeDistanceKm,
-      laborHours: assessment.result.estimatedLaborHours,
-      partsEstimate: assessment.result.estimatedPartsCost,
+      distanceKm: CostEstimationService.defaultDistanceKm,
+      laborHours: assessment?.result.estimatedLaborHours ??
+          CostEstimationService.autoLaborHours(
+            _selectedService,
+            severity: assessment?.result.severity,
+          ),
+      partsEstimate: assessment?.result.estimatedPartsCost ?? 0,
     );
   }
 
@@ -107,6 +124,7 @@ class _RequestAssistanceScreenState extends State<RequestAssistanceScreen> {
           _vehicles = realVehicles;
           _selectedVehicle = realVehicles.firstWhere((v) => v.isDefault, orElse: () => realVehicles.first);
           _aiAssessment = null;
+          _aiVersion++;
         });
       }
     } catch (_) {
@@ -127,7 +145,12 @@ class _RequestAssistanceScreenState extends State<RequestAssistanceScreen> {
           children: [
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
+                padding: EdgeInsets.fromLTRB(
+                  20,
+                  20,
+                  20,
+                  20 + MediaQuery.of(context).viewInsets.bottom,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -135,18 +158,18 @@ class _RequestAssistanceScreenState extends State<RequestAssistanceScreen> {
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: AppColors.danger.withOpacity(0.08),
+                        color: AppColors.danger.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.danger.withOpacity(0.25)),
+                        border: Border.all(color: AppColors.danger.withValues(alpha: 0.25)),
                       ),
-                      child: Row(
+                      child: const Row(
                         children: [
-                          const Icon(Icons.emergency_share_rounded, color: AppColors.danger, size: 28),
-                          const SizedBox(width: 12),
+                          Icon(Icons.emergency_share_rounded, color: AppColors.danger, size: 28),
+                          SizedBox(width: 12),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
-                              children: const [
+                              children: [
                                 Text(
                                   '24/7 Highway & City Support',
                                   style: TextStyle(
@@ -182,7 +205,7 @@ class _RequestAssistanceScreenState extends State<RequestAssistanceScreen> {
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                               decoration: BoxDecoration(
                                 color: isSelected
-                                    ? AppColors.primary.withOpacity(0.08)
+                                    ? AppColors.primary.withValues(alpha: 0.08)
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(12),
                                 border: isSelected
@@ -191,13 +214,14 @@ class _RequestAssistanceScreenState extends State<RequestAssistanceScreen> {
                               ),
                               child: Row(
                                 children: [
-                                  Radio<String>(
-                                    value: v.id,
-                                    groupValue: _selectedVehicle.id,
-                                    activeColor: AppColors.primary,
-                                    onChanged: (val) {
-                                      _selectVehicle(v);
-                                    },
+                                  Icon(
+                                    isSelected
+                                        ? Icons.radio_button_checked_rounded
+                                        : Icons.radio_button_unchecked_rounded,
+                                    color: isSelected
+                                        ? AppColors.primary
+                                        : AppColors.textHintLight,
+                                    size: 22,
                                   ),
                                   const SizedBox(width: 8),
                                   Expanded(
@@ -228,7 +252,7 @@ class _RequestAssistanceScreenState extends State<RequestAssistanceScreen> {
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                       decoration: BoxDecoration(
-                                        color: AppColors.primary.withOpacity(0.12),
+                                        color: AppColors.primary.withValues(alpha: 0.12),
                                         borderRadius: BorderRadius.circular(6),
                                       ),
                                       child: const Text(
@@ -250,10 +274,11 @@ class _RequestAssistanceScreenState extends State<RequestAssistanceScreen> {
                     const SizedBox(height: 24),
                     AiDamageAssessmentCard(
                       key: ValueKey(
-                        'ai-${_selectedVehicle.id}-${_selectedVehicle.type}',
+                        'ai-${_selectedVehicle.id}-${_selectedVehicle.type}-$_aiVersion',
                       ),
                       vehicleType: _selectedVehicle.type,
-                      estimate: _aiEstimate,
+                      selectedCategory: _selectedService,
+                      estimate: _estimate,
                       onAssessment: _applyAiAssessment,
                     ),
                     const SizedBox(height: 24),
@@ -272,7 +297,7 @@ class _RequestAssistanceScreenState extends State<RequestAssistanceScreen> {
                         final color = s['color'] as Color;
 
                         return InkWell(
-                          onTap: () => setState(() => _selectedService = s['type'] as String),
+                          onTap: () => _selectService(s['type'] as String),
                           borderRadius: BorderRadius.circular(16),
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
@@ -287,7 +312,7 @@ class _RequestAssistanceScreenState extends State<RequestAssistanceScreen> {
                               boxShadow: isSelected
                                   ? [
                                       BoxShadow(
-                                        color: color.withOpacity(0.2),
+                                        color: color.withValues(alpha: 0.2),
                                         blurRadius: 10,
                                         offset: const Offset(0, 4),
                                       ),
@@ -300,7 +325,7 @@ class _RequestAssistanceScreenState extends State<RequestAssistanceScreen> {
                                   width: 48,
                                   height: 48,
                                   decoration: BoxDecoration(
-                                    color: color.withOpacity(0.12),
+                                    color: color.withValues(alpha: 0.12),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Icon(s['icon'] as IconData, color: color, size: 26),
@@ -340,6 +365,8 @@ class _RequestAssistanceScreenState extends State<RequestAssistanceScreen> {
                         );
                       },
                     ),
+                    const SizedBox(height: 24),
+                    CostBreakdownCard(estimate: _estimate),
                   ],
                 ),
               ),
@@ -347,12 +374,17 @@ class _RequestAssistanceScreenState extends State<RequestAssistanceScreen> {
 
             // Bottom bar
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.fromLTRB(
+                20,
+                20,
+                20,
+                20 + MediaQuery.of(context).viewInsets.bottom,
+              ),
               decoration: BoxDecoration(
                 color: isDark ? AppColors.surfaceDark : Colors.white,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
+                    color: Colors.black.withValues(alpha: 0.06),
                     blurRadius: 12,
                     offset: const Offset(0, -4),
                   ),
@@ -362,14 +394,15 @@ class _RequestAssistanceScreenState extends State<RequestAssistanceScreen> {
                 label: 'Continue — Select Problem',
                 icon: Icons.arrow_forward_rounded,
                 onPressed: () {
-                  final estimate = _aiEstimate;
+                  final estimate = _estimate;
                   Navigator.pushNamed(
                     context,
                     AppRoutes.selectProblem,
                     arguments: {
                       'serviceType': _selectedService,
                       'vehicle': _selectedVehicle,
-                      if (estimate != null) 'estimatedAmount': estimate.total,
+                      'estimatedAmount': estimate.total,
+                      'costEstimate': estimate,
                       if (_aiAssessment != null)
                         'aiAssessment': _aiAssessment,
                     },

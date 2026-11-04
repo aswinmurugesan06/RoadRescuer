@@ -73,11 +73,14 @@ void main() {
     final assessment = await AiDamageService.assess(
       imageBytes: bytes,
       vehicleType: 'Bike',
+      fallbackCategory: 'Battery',
     );
 
-    expect(assessment.imageUrl, isEmpty);
+    expect(assessment.imageUrl, startsWith('data:image/'));
     expect(assessment.result.isFallback, isTrue);
     expect(assessment.result.damageTitle, isNotEmpty);
+    expect(assessment.result.detectedType, 'Battery issue');
+    expect(assessment.result.mappedCategory, 'Battery');
     expect(assessment.result.requiredTools.length, greaterThanOrEqualTo(3));
   });
 
@@ -156,14 +159,15 @@ void main() {
     );
 
     expect(estimate.baseCallout, 199);
-    expect(estimate.categoryBase, 350);
+    expect(estimate.categoryBase, 0);
     expect(estimate.distanceCharge, 75);
     expect(estimate.laborCharge, 125);
-    expect(estimate.subtotal, closeTo(1599, 0.01));
-    expect(estimate.taxAmount, closeTo(287.82, 0.01));
-    expect(estimate.total, closeTo(1886.82, 0.01));
-    expect(estimate.lowRange, closeTo(1698.138, 0.01));
-    expect(estimate.highRange, closeTo(2075.502, 0.01));
+    expect(estimate.serviceSubtotal, closeTo(399, 0.01));
+    expect(estimate.subtotal, closeTo(1249, 0.01));
+    expect(estimate.taxAmount, closeTo(224.82, 0.01));
+    expect(estimate.total, closeTo(1473.82, 0.01));
+    expect(estimate.lowRange, closeTo(1326.438, 0.01));
+    expect(estimate.highRange, closeTo(1621.202, 0.01));
   });
 
   test('assessment maps to Firestore request fields', () {

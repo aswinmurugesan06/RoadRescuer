@@ -241,7 +241,7 @@ class _BillScreenState extends State<BillScreen> {
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: AppColors.primary.withOpacity(0.12),
+                              color: AppColors.primary.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: const Icon(
@@ -281,7 +281,7 @@ class _BillScreenState extends State<BillScreen> {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: statusColor.withOpacity(0.12),
+                              color: statusColor.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
@@ -398,10 +398,10 @@ class _BillScreenState extends State<BillScreen> {
                       Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: AppColors.danger.withOpacity(0.08),
+                          color: AppColors.danger.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: AppColors.danger.withOpacity(0.2),
+                            color: AppColors.danger.withValues(alpha: 0.2),
                           ),
                         ),
                         child: Row(
@@ -430,10 +430,10 @@ class _BillScreenState extends State<BillScreen> {
                       Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: AppColors.info.withOpacity(0.08),
+                          color: AppColors.info.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: AppColors.info.withOpacity(0.2),
+                            color: AppColors.info.withValues(alpha: 0.2),
                           ),
                         ),
                         child: Row(
@@ -535,7 +535,7 @@ class _BillScreenState extends State<BillScreen> {
                   color: isDark ? AppColors.surfaceDark : Colors.white,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.06),
+                      color: Colors.black.withValues(alpha: 0.06),
                       blurRadius: 12,
                       offset: const Offset(0, -4),
                     ),
@@ -562,7 +562,7 @@ class _BillScreenState extends State<BillScreen> {
                   color: isDark ? AppColors.surfaceDark : Colors.white,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.06),
+                      color: Colors.black.withValues(alpha: 0.06),
                       blurRadius: 12,
                       offset: const Offset(0, -4),
                     ),

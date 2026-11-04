@@ -11,6 +11,7 @@ import '../../../services/billing_service.dart';
 import '../../../services/socket_service.dart';
 import '../../../services/routing_service.dart';
 import '../../../services/phone_service.dart';
+import '../../../widgets/ai_mechanic_prep_card.dart';
 import '../../../widgets/glass.dart';
 import '../../../widgets/rr_button.dart';
 import '../../../widgets/rr_card.dart';
@@ -55,7 +56,11 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
     _pollingTimer?.cancel();
     final reqId = _request?.id;
     if (reqId != null && reqId.isNotEmpty) {
-      SocketService.instance.leaveRequestRoom(reqId);
+      try {
+        SocketService.instance.leaveRequestRoom(reqId);
+      } catch (_) {
+        // Firebase/socket may be unavailable during tests or shutdown.
+      }
     }
     super.dispose();
   }
@@ -65,8 +70,13 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
     final reqId = _request?.id;
     if (reqId == null || reqId.isEmpty) return;
 
-    await SocketService.instance.connect();
-    SocketService.instance.joinRequestRoom(reqId);
+    try {
+      await SocketService.instance.connect();
+      SocketService.instance.joinRequestRoom(reqId);
+    } catch (_) {
+      // Realtime updates are optional; polling still keeps the screen fresh.
+      return;
+    }
 
     // Live provider GPS location
     SocketService.instance.onProviderLocation = (id, lat, lng) {
@@ -314,7 +324,12 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
                     physics: const AlwaysScrollableScrollPhysics(
                       parent: BouncingScrollPhysics(),
                     ),
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
+                    padding: EdgeInsets.fromLTRB(
+                      16,
+                      8,
+                      16,
+                      MediaQuery.of(context).viewInsets.bottom + 28,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -350,6 +365,10 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
                           const SizedBox(height: 12),
                           _buildEtaCard(isDark, status, hasPendingInvoice),
                           const SizedBox(height: 12),
+                          if (_request?.hasAiDamageReport == true) ...[
+                            AiMechanicPrepCard(request: _request!),
+                            const SizedBox(height: 12),
+                          ],
                           if (_providerLat != null && _providerLng != null) ...[
                             _buildProviderLiveMapCard(),
                             const SizedBox(height: 12),
@@ -527,11 +546,11 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
         height: 36,
         decoration: BoxDecoration(
           color: isDark
-              ? Colors.white.withOpacity(0.06)
-              : Colors.white.withOpacity(0.8),
+              ? Colors.white.withValues(alpha: 0.06)
+              : Colors.white.withValues(alpha: 0.8),
           borderRadius: BorderRadius.circular(11),
           border: Border.all(
-            color: isDark ? Colors.white.withOpacity(0.08) : Colors.white,
+            color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.white,
           ),
         ),
         child: isLoading
@@ -572,8 +591,8 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
     return GlassCard(
       padding: const EdgeInsets.all(13),
       color: isDark
-          ? AppColors.cardDark.withOpacity(0.9)
-          : Colors.white.withOpacity(0.82),
+          ? AppColors.cardDark.withValues(alpha: 0.9)
+          : Colors.white.withValues(alpha: 0.82),
       child: Row(
         children: [
           Container(
@@ -586,7 +605,7 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.secondary.withOpacity(0.28),
+                  color: AppColors.secondary.withValues(alpha: 0.28),
                   blurRadius: 12,
                   offset: const Offset(0, 5),
                 ),
@@ -694,9 +713,9 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.06),
+        color: color.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.12)),
+        border: Border.all(color: color.withValues(alpha: 0.12)),
       ),
       child: Row(
         children: [
@@ -765,12 +784,12 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
         color: isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppColors.primary.withOpacity(0.45),
+          color: AppColors.primary.withValues(alpha: 0.45),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.08),
+            color: AppColors.primary.withValues(alpha: 0.08),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -788,7 +807,7 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.12),
+                      color: AppColors.primary.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(
@@ -820,7 +839,7 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.15),
+                  color: statusColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -891,7 +910,7 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: AppColors.info.withOpacity(0.08),
+                color: AppColors.info.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -958,7 +977,7 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
         color: isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppColors.success.withOpacity(0.45),
+          color: AppColors.success.withValues(alpha: 0.45),
           width: 1.5,
         ),
       ),
@@ -970,7 +989,7 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.success.withOpacity(0.12),
+                  color: AppColors.success.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
@@ -1046,7 +1065,7 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.12),
+            color: Colors.black.withValues(alpha: 0.12),
             blurRadius: 14,
             offset: const Offset(0, 6),
           ),
@@ -1057,40 +1076,65 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: (hasPendingInvoice ? AppColors.warning : AppColors.primary).withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      hasPendingInvoice ? Icons.receipt_long_rounded : Icons.fiber_manual_record,
-                      color: hasPendingInvoice ? AppColors.warning : AppColors.primary,
-                      size: hasPendingInvoice ? 13 : 10,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      hasPendingInvoice ? 'INVOICE READY' : 'LIVE ASSISTANCE',
-                      style: TextStyle(
-                        color: hasPendingInvoice ? AppColors.warning : AppColors.primaryLight,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1,
+              Flexible(
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: (hasPendingInvoice
+                            ? AppColors.warning
+                            : AppColors.primary)
+                        .withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        hasPendingInvoice
+                            ? Icons.receipt_long_rounded
+                            : Icons.fiber_manual_record,
+                        color: hasPendingInvoice
+                            ? AppColors.warning
+                            : AppColors.primary,
+                        size: hasPendingInvoice ? 13 : 10,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          hasPendingInvoice
+                              ? 'INVOICE READY'
+                              : 'LIVE ASSISTANCE',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: hasPendingInvoice
+                                ? AppColors.warning
+                                : AppColors.primaryLight,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              Text(
-                hasPendingInvoice
-                    ? 'Payment Due'
-                    : (stepIndex >= 2 ? 'On Site' : 'En Route'),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  hasPendingInvoice
+                      ? 'Payment Due'
+                      : (stepIndex >= 2 ? 'On Site' : 'En Route'),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.right,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ],
@@ -1132,7 +1176,7 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.16),
+            color: Colors.black.withValues(alpha: 0.16),
             blurRadius: 14,
             offset: const Offset(0, 6),
           ),
@@ -1146,11 +1190,11 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.warning.withOpacity(0.25),
+                  color: AppColors.warning.withValues(alpha: 0.25),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Row(
-                  children: const [
+                child: const Row(
+                  children: [
                     Icon(Icons.radar_rounded, color: AppColors.warning, size: 14),
                     SizedBox(width: 6),
                     Text(
@@ -1202,9 +1246,9 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.danger.withOpacity(0.12),
+        color: AppColors.danger.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.danger.withOpacity(0.35)),
+        border: Border.all(color: AppColors.danger.withValues(alpha: 0.35)),
       ),
       child: Column(
         children: [
@@ -1235,12 +1279,12 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.success.withOpacity(0.12),
+        color: AppColors.success.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.success.withOpacity(0.35)),
+        border: Border.all(color: AppColors.success.withValues(alpha: 0.35)),
       ),
-      child: Column(
-        children: const [
+      child: const Column(
+        children: [
           Icon(Icons.check_circle_rounded, color: AppColors.success, size: 48),
           SizedBox(height: 12),
           Text(
@@ -1349,7 +1393,7 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
                 width: 50,
                 height: 50,
                 decoration: BoxDecoration(
-                  color: AppColors.secondary.withOpacity(0.12),
+                  color: AppColors.secondary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: const Icon(Icons.person_pin_rounded, color: AppColors.secondary, size: 28),
@@ -1385,7 +1429,7 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
                 child: OutlinedButton.icon(
                   onPressed: () async {
                     final opened = await PhoneService.call(providerMobile);
-                    if (!opened && context.mounted) {
+                    if (!opened && mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Could not open the phone dialer.'),
@@ -1429,9 +1473,9 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.08),
+        color: AppColors.primary.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
@@ -1444,10 +1488,10 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
             child: const Icon(Icons.pin_rounded, color: Colors.white, size: 20),
           ),
           const SizedBox(width: 14),
-          Expanded(
+          const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 Text(
                   'Service Start PIN',
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
@@ -1529,7 +1573,7 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
                               ? AppColors.secondary
                               : completed
                                   ? AppColors.primary
-                                  : Colors.white.withOpacity(0.7),
+                                  : Colors.white.withValues(alpha: 0.7),
                           shape: BoxShape.circle,
                           border: Border.all(
                             color: active
@@ -1542,7 +1586,7 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
                           boxShadow: active
                               ? [
                                   BoxShadow(
-                                    color: AppColors.secondary.withOpacity(0.35),
+                                    color: AppColors.secondary.withValues(alpha: 0.35),
                                     blurRadius: 10,
                                     spreadRadius: 1,
                                   ),
@@ -1586,7 +1630,7 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
                     margin: const EdgeInsets.only(bottom: 16),
                     color: index < currentStep
                         ? AppColors.primary
-                        : color.withOpacity(0.5),
+                        : color.withValues(alpha: 0.5),
                   ),
               ],
             ),
@@ -1662,7 +1706,7 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.12),
+                  color: AppColors.primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(Icons.location_on_rounded,
@@ -1692,11 +1736,11 @@ class _ActiveAssistanceScreenState extends State<ActiveAssistanceScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: AppColors.success.withOpacity(0.15),
+                  color: AppColors.success.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Row(
-                  children: const [
+                child: const Row(
+                  children: [
                     Icon(Icons.circle, color: AppColors.success, size: 8),
                     SizedBox(width: 4),
                     Text(

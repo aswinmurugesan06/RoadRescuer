@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import '../core/theme/app_colors.dart';
 import '../services/ai_damage_service.dart';
 import '../services/cost_estimation_service.dart';
+import 'damage_photo_view.dart';
 import 'glass.dart';
 
 /// Customer-facing photo upload + AI damage assessment card.
@@ -13,12 +14,14 @@ import 'glass.dart';
 /// Used on the Request Assistance and Dynamic Cost Estimator screens.
 class AiDamageAssessmentCard extends StatefulWidget {
   final String vehicleType;
+  final String? selectedCategory;
   final ValueChanged<AiDamageAssessment>? onAssessment;
   final CostEstimate? estimate;
 
   const AiDamageAssessmentCard({
     super.key,
     required this.vehicleType,
+    this.selectedCategory,
     this.onAssessment,
     this.estimate,
   });
@@ -42,9 +45,9 @@ class _AiDamageAssessmentCardState extends State<AiDamageAssessmentCard> {
     try {
       final XFile? file = await _picker.pickImage(
         source: source,
-        maxWidth: 1024,
-        maxHeight: 1024,
-        imageQuality: 70,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 65,
       );
       if (file == null) return;
 
@@ -59,6 +62,7 @@ class _AiDamageAssessmentCardState extends State<AiDamageAssessmentCard> {
       final assessment = await AiDamageService.assess(
         imageBytes: bytes,
         vehicleType: widget.vehicleType,
+        fallbackCategory: widget.selectedCategory,
       );
       if (!mounted) return;
 
@@ -157,52 +161,48 @@ class _AiDamageAssessmentCardState extends State<AiDamageAssessmentCard> {
           ),
           const SizedBox(height: 12),
           if (_imageBytes != null) ...[
-            ClipRRect(
-              borderRadius: BorderRadius.circular(14),
-              child: Stack(
-                children: [
-                  Image.memory(
-                    _imageBytes!,
-                    width: double.infinity,
-                    height: 160,
-                    fit: BoxFit.cover,
-                    gaplessPlayback: true,
-                  ),
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.62),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.auto_awesome_rounded,
-                            size: 11,
+            Stack(
+              children: [
+                DamagePhotoView(
+                  imageUrl: _assessment?.imageUrl,
+                  fallbackBytes: _imageBytes,
+                  height: 160,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.62),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.auto_awesome_rounded,
+                          size: 11,
+                          color: Colors.white,
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          'Gemini Vision',
+                          style: TextStyle(
+                            fontSize: 8,
+                            fontWeight: FontWeight.w700,
                             color: Colors.white,
                           ),
-                          SizedBox(width: 4),
-                          Text(
-                            'Gemini Vision',
-                            style: TextStyle(
-                              fontSize: 8,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
             const SizedBox(height: 10),
           ],
@@ -313,38 +313,43 @@ class _AiDamageAssessmentCardState extends State<AiDamageAssessmentCard> {
               result.visibleIndicators,
               color: AppColors.danger,
             ),
-            const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.06),
-                borderRadius: BorderRadius.circular(10),
+            if (result.requiredTools.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              const Text(
+                'REQUIRED TOOLS',
+                style: TextStyle(
+                  fontSize: 8,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.6,
+                  color: AppColors.textSecondaryLight,
+                ),
               ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.handyman_rounded,
-                    size: 15,
-                    color: AppColors.primary,
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      '${result.requiredTools.length} tools • '
-                      '${result.recommendedParts.length} spare parts will be '
-                      'shared with your mechanic.',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 9.5,
-                        height: 1.3,
-                        color: AppColors.textSecondaryLight,
-                      ),
-                    ),
-                  ),
-                ],
+              const SizedBox(height: 5),
+              _chipWrap(
+                result.requiredTools,
+                color: AppColors.primary,
+                icon: Icons.handyman_rounded,
               ),
-            ),
+            ],
+            if (result.recommendedParts.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              const Text(
+                'RECOMMENDED SPARE PARTS',
+                style: TextStyle(
+                  fontSize: 8,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.6,
+                  color: AppColors.textSecondaryLight,
+                ),
+              ),
+              const SizedBox(height: 5),
+              _chipWrap(
+                result.recommendedParts,
+                color: AppColors.tertiary,
+                icon: Icons.settings_suggest_rounded,
+              ),
+            ],
+            const SizedBox(height: 8),
             if (result.isFallback) ...[
               const SizedBox(height: 6),
               const Text(
@@ -443,7 +448,11 @@ class _AiDamageAssessmentCardState extends State<AiDamageAssessmentCard> {
     );
   }
 
-  Widget _chipWrap(List<String> items, {required Color color}) {
+  Widget _chipWrap(
+    List<String> items, {
+    required Color color,
+    IconData icon = Icons.check_circle_rounded,
+  }) {
     if (items.isEmpty) return const SizedBox.shrink();
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -467,7 +476,7 @@ class _AiDamageAssessmentCardState extends State<AiDamageAssessmentCard> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.check_circle_rounded, size: 11, color: color),
+                    Icon(icon, size: 11, color: color),
                     const SizedBox(width: 4),
                     Flexible(
                       child: Text(

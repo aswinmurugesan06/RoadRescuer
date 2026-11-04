@@ -187,11 +187,11 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.12),
+              color: AppColors.primary.withValues(alpha: 0.12),
               shape: BoxShape.circle,
               border: Border.all(
                 color: isDark
-                    ? Colors.white.withOpacity(0.08)
+                    ? Colors.white.withValues(alpha: 0.08)
                     : Colors.white,
               ),
             ),
@@ -225,12 +225,12 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             height: 42,
             decoration: BoxDecoration(
               color: Theme.of(context).brightness == Brightness.dark
-                  ? Colors.white.withOpacity(0.06)
-                  : Colors.white.withOpacity(0.72),
+                  ? Colors.white.withValues(alpha: 0.06)
+                  : Colors.white.withValues(alpha: 0.72),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.white.withOpacity(0.08)
+                    ? Colors.white.withValues(alpha: 0.08)
                     : Colors.white,
               ),
             ),
@@ -270,7 +270,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.tertiary.withOpacity(0.35),
+                    color: AppColors.tertiary.withValues(alpha: 0.35),
                     blurRadius: 8,
                     spreadRadius: 2,
                   ),
@@ -278,7 +278,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               ),
             ),
             const SizedBox(width: 8),
-            Text(
+            const Text(
               'ROADRESCUE GUARDIAN • LIVE',
               style: TextStyle(
                 fontSize: 10,
@@ -395,12 +395,12 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                                 horizontal: 7, vertical: 3),
                             decoration: BoxDecoration(
                               color: isDark
-                                  ? Colors.white.withOpacity(0.06)
-                                  : Colors.white.withOpacity(0.8),
+                                  ? Colors.white.withValues(alpha: 0.06)
+                                  : Colors.white.withValues(alpha: 0.8),
                               borderRadius: BorderRadius.circular(6),
                               border: Border.all(
                                 color: isDark
-                                    ? Colors.white.withOpacity(0.08)
+                                    ? Colors.white.withValues(alpha: 0.08)
                                     : Colors.white,
                               ),
                             ),
@@ -421,7 +421,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: AppColors.success.withOpacity(0.1),
+                            color: AppColors.success.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(999),
                           ),
                           child: Row(
@@ -473,8 +473,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
           const SizedBox(height: 12),
           Divider(
             color: isDark
-                ? Colors.white.withOpacity(0.06)
-                : AppColors.dividerLight.withOpacity(0.7),
+                ? Colors.white.withValues(alpha: 0.06)
+                : AppColors.dividerLight.withValues(alpha: 0.7),
           ),
           const SizedBox(height: 10),
           Row(
@@ -511,11 +511,11 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
         decoration: BoxDecoration(
           color: isDark
-              ? Colors.white.withOpacity(0.04)
-              : Colors.white.withOpacity(0.55),
+              ? Colors.white.withValues(alpha: 0.04)
+              : Colors.white.withValues(alpha: 0.55),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
+            color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
           ),
         ),
         child: Column(
@@ -550,24 +550,24 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: AppColors.secondary.withOpacity(0.16),
+            color: AppColors.secondary.withValues(alpha: 0.16),
             blurRadius: 28,
             offset: const Offset(0, 10),
           ),
         ],
       ),
       child: GlassCard(
-        borderColor: AppColors.secondary.withOpacity(0.28),
+        borderColor: AppColors.secondary.withValues(alpha: 0.28),
         color: isDark
-            ? AppColors.cardDark.withOpacity(0.9)
-            : Colors.white.withOpacity(0.84),
+            ? AppColors.cardDark.withValues(alpha: 0.9)
+            : Colors.white.withValues(alpha: 0.84),
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                GlassIconBox(
+                const GlassIconBox(
                   icon: Icons.sos_rounded,
                   color: AppColors.secondary,
                   size: 38,
@@ -589,10 +589,10 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
                   decoration: BoxDecoration(
-                    color: AppColors.secondary.withOpacity(0.1),
+                    color: AppColors.secondary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(999),
                     border: Border.all(
-                      color: AppColors.secondary.withOpacity(0.18),
+                      color: AppColors.secondary.withValues(alpha: 0.18),
                     ),
                   ),
                   child: const Text(
@@ -666,13 +666,17 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                 const Icon(Icons.verified_user_rounded,
                     size: 13, color: AppColors.tertiary),
                 const SizedBox(width: 4),
-                Text(
-                  'Verified responders • transparent pricing',
-                  style: TextStyle(
-                    fontSize: 9.5,
-                    color: isDark
-                        ? AppColors.textSecondaryDark
-                        : AppColors.textSecondaryLight,
+                Flexible(
+                  child: Text(
+                    'Verified responders • transparent pricing',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 9.5,
+                      color: isDark
+                          ? AppColors.textSecondaryDark
+                          : AppColors.textSecondaryLight,
+                    ),
                   ),
                 ),
               ],
@@ -685,7 +689,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
 
   Widget _buildServiceList() {
     final services = [
-      _ServiceItem(
+      const _ServiceItem(
         title: 'Flat Tyre / Puncture',
         subtitle: 'Fast mobile repair and spare swap at roadside',
         icon: Icons.tire_repair_rounded,
@@ -693,14 +697,14 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         badge: 'Fastest',
         type: 'Puncture',
       ),
-      _ServiceItem(
+      const _ServiceItem(
         title: 'Battery Jump-Start',
         subtitle: '12V boost, battery test and terminal check',
         icon: Icons.electric_bolt_rounded,
         color: AppColors.battery,
         type: 'Battery',
       ),
-      _ServiceItem(
+      const _ServiceItem(
         title: 'Towing Service',
         subtitle: 'Flatbed transport for low-clearance and AWD vehicles',
         icon: Icons.fire_truck_rounded,
@@ -708,14 +712,14 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         badge: 'Flatbed',
         type: 'Tow',
       ),
-      _ServiceItem(
+      const _ServiceItem(
         title: 'Mechanic Breakdown',
         subtitle: 'On-site diagnostics, belts and emergency triage',
         icon: Icons.car_repair_rounded,
         color: AppColors.secondary,
         type: 'Mechanic',
       ),
-      _ServiceItem(
+      const _ServiceItem(
         title: 'Emergency Fuel & EV Boost',
         subtitle: 'Fuel delivery and mobile charging support',
         icon: Icons.ev_station_rounded,
@@ -763,7 +767,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 6, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: service.color.withOpacity(0.1),
+                                    color: service.color.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(999),
                                   ),
                                   child: Text(
@@ -847,7 +851,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: AppColors.tertiary.withOpacity(0.1),
+                        color: AppColors.tertiary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(999),
                       ),
                       child: const Text(
@@ -889,15 +893,15 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
       padding: const EdgeInsets.all(14),
       child: Column(
         children: [
-          Row(
+          const Row(
             children: [
-              const GlassIconBox(
+              GlassIconBox(
                 icon: Icons.radar_rounded,
                 size: 34,
                 iconSize: 18,
               ),
-              const SizedBox(width: 8),
-              const Expanded(
+              SizedBox(width: 8),
+              Expanded(
                 child: Text(
                   'Nearby Fleet Patrol',
                   style: TextStyle(
@@ -991,7 +995,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.tertiary.withOpacity(0.1),
+                  color: AppColors.tertiary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: const Row(
@@ -1196,10 +1200,10 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     return Container(
       padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFBEB).withOpacity(isDark ? 0.15 : 0.8),
+        color: const Color(0xFFFFFBEB).withValues(alpha: isDark ? 0.15 : 0.8),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppColors.warning.withOpacity(0.25),
+          color: AppColors.warning.withValues(alpha: 0.25),
         ),
       ),
       child: Row(
@@ -1249,13 +1253,17 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             const Icon(Icons.lock_rounded,
                 size: 13, color: AppColors.tertiary),
             const SizedBox(width: 4),
-            Text(
-              'Encrypted roadside dispatch • RoadRescue Shield',
-              style: TextStyle(
-                fontSize: 9.5,
-                color: isDark
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondaryLight,
+            Flexible(
+              child: Text(
+                'Encrypted roadside dispatch • RoadRescue Shield',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 9.5,
+                  color: isDark
+                      ? AppColors.textSecondaryDark
+                      : AppColors.textSecondaryLight,
+                ),
               ),
             ),
           ],
@@ -1363,11 +1371,11 @@ class _MiniMap extends StatelessWidget {
       width: 28,
       height: 28,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.9),
+        color: Colors.white.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(9),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.12),
+            color: Colors.black.withValues(alpha: 0.12),
             blurRadius: 8,
             offset: const Offset(0, 3),
           ),
@@ -1382,12 +1390,12 @@ class _RoutePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final road = Paint()
-      ..color = Colors.white.withOpacity(0.75)
+      ..color = Colors.white.withValues(alpha: 0.75)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 20
       ..strokeCap = StrokeCap.round;
     final route = Paint()
-      ..color = AppColors.primary.withOpacity(0.7)
+      ..color = AppColors.primary.withValues(alpha: 0.7)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3
       ..strokeCap = StrokeCap.round;
@@ -1406,7 +1414,7 @@ class _RoutePainter extends CustomPainter {
     canvas.drawPath(path, route);
 
     final cross = Paint()
-      ..color = Colors.white.withOpacity(0.45)
+      ..color = Colors.white.withValues(alpha: 0.45)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 10;
     final crossPath = Path()

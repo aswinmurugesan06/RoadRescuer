@@ -6,6 +6,7 @@ import '../../../services/service_request_service.dart';
 import '../../../services/phone_service.dart';
 import '../../../services/provider_service.dart';
 import '../../../widgets/ai_mechanic_prep_card.dart';
+import '../../../widgets/customer_estimate_card.dart';
 import '../../../widgets/rr_button.dart';
 import '../../../widgets/rr_card.dart';
 import '../../../widgets/rr_status_badge.dart';
@@ -209,6 +210,11 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                       const SizedBox(height: 24),
                     ],
 
+                    if (req != null) ...[
+                      CustomerEstimateCard(request: req),
+                      const SizedBox(height: 24),
+                    ],
+
                     // Repair Checklist
                     const SectionHeader(title: 'Work Checklist'),
                     const SizedBox(height: 10),
@@ -282,12 +288,17 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
 
             // Bottom CTA: Complete repair & bill
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.fromLTRB(
+                20,
+                20,
+                20,
+                20 + MediaQuery.of(context).viewInsets.bottom,
+              ),
               decoration: BoxDecoration(
                 color: isDark ? AppColors.surfaceDark : Colors.white,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
+                    color: Colors.black.withValues(alpha: 0.06),
                     blurRadius: 12,
                     offset: const Offset(0, -4),
                   ),

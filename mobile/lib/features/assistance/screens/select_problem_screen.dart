@@ -4,6 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/constants/mock_data.dart';
 import '../../../models/vehicle_model.dart';
 import '../../../services/ai_damage_service.dart';
+import '../../../services/cost_estimation_service.dart';
 import '../../../widgets/rr_button.dart';
 import '../../../widgets/rr_card.dart';
 import '../../../widgets/rr_text_field.dart';
@@ -13,6 +14,7 @@ class SelectProblemScreen extends StatefulWidget {
   final VehicleModel? vehicle;
   final double? estimatedAmount;
   final AiDamageAssessment? aiAssessment;
+  final CostEstimate? costEstimate;
 
   const SelectProblemScreen({
     super.key,
@@ -20,6 +22,7 @@ class SelectProblemScreen extends StatefulWidget {
     this.vehicle,
     this.estimatedAmount,
     this.aiAssessment,
+    this.costEstimate,
   });
 
   @override
@@ -97,10 +100,10 @@ class _SelectProblemScreenState extends State<SelectProblemScreen> {
                         width: double.infinity,
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.06),
+                          color: AppColors.primary.withValues(alpha: 0.06),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: AppColors.primary.withOpacity(0.18),
+                            color: AppColors.primary.withValues(alpha: 0.18),
                           ),
                         ),
                         child: Row(
@@ -160,7 +163,7 @@ class _SelectProblemScreenState extends State<SelectProblemScreen> {
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                               decoration: BoxDecoration(
                                 color: isSelected
-                                    ? AppColors.primary.withOpacity(0.08)
+                                    ? AppColors.primary.withValues(alpha: 0.08)
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(10),
                               ),
@@ -232,7 +235,7 @@ class _SelectProblemScreenState extends State<SelectProblemScreen> {
                 color: isDark ? AppColors.surfaceDark : Colors.white,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
+                    color: Colors.black.withValues(alpha: 0.06),
                     blurRadius: 12,
                     offset: const Offset(0, -4),
                   ),
@@ -244,7 +247,7 @@ class _SelectProblemScreenState extends State<SelectProblemScreen> {
                   if (widget.estimatedAmount != null) ...[
                     Row(
                       children: [
-                        Icon(Icons.calculate_rounded,
+                        const Icon(Icons.calculate_rounded,
                             size: 16, color: AppColors.primary),
                         const SizedBox(width: 6),
                         const Expanded(
@@ -281,6 +284,7 @@ class _SelectProblemScreenState extends State<SelectProblemScreen> {
                           'vehicle': widget.vehicle,
                           'estimatedAmount': widget.estimatedAmount,
                           'aiAssessment': widget.aiAssessment,
+                          'costEstimate': widget.costEstimate,
                         },
                       );
                     },
@@ -306,7 +310,7 @@ class _SelectProblemScreenState extends State<SelectProblemScreen> {
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
           decoration: BoxDecoration(
-            color: isSelected ? color.withOpacity(0.12) : (isDark ? AppColors.cardDark : Colors.white),
+            color: isSelected ? color.withValues(alpha: 0.12) : (isDark ? AppColors.cardDark : Colors.white),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isSelected ? color : (isDark ? AppColors.dividerDark : AppColors.dividerLight),

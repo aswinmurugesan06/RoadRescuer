@@ -162,9 +162,9 @@ class _ProviderAvailabilityScreenState extends State<ProviderAvailabilityScreen>
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Column(
+                        const Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
+                          children: [
                             Text(
                               '24/7 Emergency Dispatch',
                               style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
@@ -178,7 +178,7 @@ class _ProviderAvailabilityScreenState extends State<ProviderAvailabilityScreen>
                         ),
                         Switch(
                           value: _is24x7,
-                          activeColor: AppColors.primary,
+                          activeThumbColor: AppColors.primary,
                           onChanged: (v) => setState(() => _is24x7 = v),
                         ),
                       ],
@@ -245,8 +245,8 @@ class _ProviderAvailabilityScreenState extends State<ProviderAvailabilityScreen>
                       height: 44,
                       decoration: BoxDecoration(
                         color: (_latitude != null && _longitude != null)
-                            ? AppColors.success.withOpacity(0.12)
-                            : AppColors.primary.withOpacity(0.12),
+                            ? AppColors.success.withValues(alpha: 0.12)
+                            : AppColors.primary.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
@@ -360,7 +360,7 @@ class _ProviderAvailabilityScreenState extends State<ProviderAvailabilityScreen>
           Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
           Switch(
             value: val,
-            activeColor: AppColors.primary,
+            activeThumbColor: AppColors.primary,
             onChanged: onChanged,
           ),
         ],

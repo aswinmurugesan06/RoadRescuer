@@ -28,7 +28,7 @@ class ServiceVerificationPinScreen extends StatelessWidget {
                 width: 72,
                 height: 72,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.12),
+                  color: AppColors.primary.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.shield_rounded, size: 40, color: AppColors.primary),
@@ -61,7 +61,7 @@ class ServiceVerificationPinScreen extends StatelessWidget {
                       border: Border.all(color: AppColors.primary, width: 2),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primary.withOpacity(0.15),
+                          color: AppColors.primary.withValues(alpha: 0.15),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -90,8 +90,8 @@ class ServiceVerificationPinScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: AppColors.dividerLight),
                 ),
-                child: Column(
-                  children: const [
+                child: const Column(
+                  children: [
                     Icon(Icons.qr_code_2_rounded, size: 100, color: Colors.black87),
                     SizedBox(height: 6),
                     Text(

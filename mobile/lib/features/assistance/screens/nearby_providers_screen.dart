@@ -60,18 +60,23 @@ class _NearbyProvidersScreenState extends State<NearbyProvidersScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (ctx) => _ProviderConfirmSheet(
-        provider: provider,
-        serviceType: widget.serviceType,
-        problem: widget.problem,
-        onConfirm: () {
-          Navigator.pop(ctx);
-          Navigator.pushNamedAndRemoveUntil(
-            context,
-            AppRoutes.activeAssistance,
-            (r) => r.isFirst,
-          );
-        },
+      builder: (ctx) => ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(ctx).size.height * 0.88,
+        ),
+        child: _ProviderConfirmSheet(
+          provider: provider,
+          serviceType: widget.serviceType,
+          problem: widget.problem,
+          onConfirm: () {
+            Navigator.pop(ctx);
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              AppRoutes.activeAssistance,
+              (r) => r.isFirst,
+            );
+          },
+        ),
       ),
     );
   }
@@ -99,7 +104,7 @@ class _NearbyProvidersScreenState extends State<NearbyProvidersScreen> {
                           child: CircularProgressIndicator(
                             strokeWidth: 3,
                             valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
-                            backgroundColor: AppColors.primary.withOpacity(0.1),
+                            backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                           ),
                         ),
                         const Icon(Icons.radar_rounded, color: AppColors.primary, size: 36),
@@ -223,7 +228,7 @@ class _ProviderCard extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -238,7 +243,7 @@ class _ProviderCard extends StatelessWidget {
                 width: 52,
                 height: 52,
                 decoration: BoxDecoration(
-                  color: AppColors.secondary.withOpacity(0.1),
+                  color: AppColors.secondary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: const Icon(Icons.engineering_rounded, color: AppColors.secondary, size: 28),
@@ -378,7 +383,12 @@ class _ProviderConfirmSheet extends StatelessWidget {
     return SafeArea(
       top: false,
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.fromLTRB(
+          24,
+          24,
+          24,
+          MediaQuery.of(context).viewInsets.bottom + 24,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -388,7 +398,7 @@ class _ProviderConfirmSheet extends StatelessWidget {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey.withOpacity(0.4),
+                  color: Colors.grey.withValues(alpha: 0.4),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -408,9 +418,9 @@ class _ProviderConfirmSheet extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.06),
+                color: AppColors.primary.withValues(alpha: 0.06),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+                border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
               ),
               child: Column(
                 children: [

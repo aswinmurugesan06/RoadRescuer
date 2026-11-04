@@ -191,9 +191,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: accentColor.withOpacity(0.12),
+                        color: accentColor.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: accentColor.withOpacity(0.3)),
+                        border: Border.all(color: accentColor.withValues(alpha: 0.3)),
                       ),
                       child: Text(
                         roleLabel,
@@ -290,7 +290,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
-                    value: _category,
+                    key: ValueKey('category-$_category'),
+                    initialValue: _category,
                     decoration: InputDecoration(
                       labelText: 'Primary Service Capability',
                       prefixIcon: const Icon(Icons.category_outlined),
@@ -339,11 +340,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   isLoading: _isLoading,
                 ),
                 const SizedBox(height: 16),
-                Row(
+                const Row(
                   children: [
-                    const Expanded(child: Divider()),
+                    Expanded(child: Divider()),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      padding: EdgeInsets.symmetric(horizontal: 12),
                       child: Text(
                         'OR',
                         style: TextStyle(
@@ -354,7 +355,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                       ),
                     ),
-                    const Expanded(child: Divider()),
+                    Expanded(child: Divider()),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -464,7 +465,7 @@ class _RoleOption extends StatelessWidget {
             color: selected ? activeColor : AppColors.dividerLight,
             width: selected ? 2 : 1,
           ),
-          color: selected ? activeColor.withOpacity(0.06) : Colors.white,
+          color: selected ? activeColor.withValues(alpha: 0.06) : Colors.white,
         ),
         child: Column(
           children: [

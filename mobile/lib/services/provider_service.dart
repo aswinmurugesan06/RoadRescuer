@@ -67,8 +67,17 @@ class ProviderService {
       }
     }
 
+    final isOnline = normalized != 'OFFLINE';
     await _userRef.update({
       'availability': normalized,
+      'availabilityStatus': normalized,
+      'isOnline': isOnline,
+      'isAvailable': normalized == 'AVAILABLE',
+      'status': normalized,
+      if (normalized == 'OFFLINE') ...{
+        'activeJobId': null,
+        'currentRequestId': null,
+      },
       'updatedAt': FieldValue.serverTimestamp(),
     });
     return _profileFromUserDoc();

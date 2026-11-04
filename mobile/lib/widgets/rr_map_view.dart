@@ -172,7 +172,7 @@ class RRMapViewState extends State<RRMapView> {
       await _controller!.clearCircles();
       for (final m in widget.additionalMarkers) {
         final colorHex =
-            '#${m.color.value.toRadixString(16).padLeft(8, '0').substring(2)}';
+            '#${m.color.toARGB32().toRadixString(16).padLeft(8, '0').substring(2)}';
         await _controller!.addCircle(
           CircleOptions(
             geometry: LatLng(m.latitude, m.longitude),
@@ -196,7 +196,7 @@ class RRMapViewState extends State<RRMapView> {
     try {
       await _controller!.clearLines();
       final colorHex =
-          '#${widget.routeColor.value.toRadixString(16).padLeft(8, '0').substring(2)}';
+          '#${widget.routeColor.toARGB32().toRadixString(16).padLeft(8, '0').substring(2)}';
 
       await _controller!.addLine(
         LineOptions(
@@ -322,7 +322,7 @@ class RRMapViewState extends State<RRMapView> {
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: widget.markerColor.withOpacity(0.4),
+                          color: widget.markerColor.withValues(alpha: 0.4),
                           blurRadius: 8,
                           offset: const Offset(0, 3),
                         ),
@@ -349,7 +349,7 @@ class RRMapViewState extends State<RRMapView> {
                       border: Border.all(color: Colors.white, width: 2.5),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.3),
+                          color: Colors.black.withValues(alpha: 0.3),
                           blurRadius: 8,
                           offset: const Offset(0, 4),
                         ),
@@ -370,11 +370,11 @@ class RRMapViewState extends State<RRMapView> {
         if (!_isMapReady && _mapError == null)
           Positioned.fill(
             child: Container(
-              color: const Color(0xFF1E293B).withOpacity(0.85),
-              child: Center(
+              color: const Color(0xFF1E293B).withValues(alpha: 0.85),
+              child: const Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
-                  children: const [
+                  children: [
                     SizedBox(
                       width: 32,
                       height: 32,

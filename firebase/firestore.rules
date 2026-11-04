@@ -30,7 +30,19 @@ service cloud.firestore {
     // Fields that other participants may update on a provider's profile.
     function onlyCountersChanged() {
       return request.resource.data.diff(resource.data).affectedKeys()
-        .hasOnly(['rating', 'ratingCount', 'totalJobs', 'availability', 'updatedAt']);
+        .hasOnly([
+          'rating',
+          'ratingCount',
+          'totalJobs',
+          'availability',
+          'availabilityStatus',
+          'isOnline',
+          'isAvailable',
+          'status',
+          'activeJobId',
+          'currentRequestId',
+          'updatedAt'
+        ]);
     }
 
     // Safe read for optional fields. Directly reading a missing field throws

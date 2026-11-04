@@ -153,7 +153,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.12),
+                          color: AppColors.primary.withValues(alpha: 0.12),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
@@ -163,10 +163,10 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                         ),
                       ),
                       const SizedBox(width: 14),
-                      Expanded(
+                      const Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
+                          children: [
                             Text(
                               'Register your vehicle',
                               style: TextStyle(
@@ -196,10 +196,10 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: AppColors.danger.withOpacity(0.1),
+                      color: AppColors.danger.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                          color: AppColors.danger.withOpacity(0.3)),
+                          color: AppColors.danger.withValues(alpha: 0.3)),
                     ),
                     child: Text(
                       _errorMessage!,
@@ -315,9 +315,9 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
+                      const Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
+                        children: [
                           Text(
                             'Set as Default Vehicle',
                             style: TextStyle(
@@ -337,7 +337,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                       ),
                       Switch(
                         value: _isDefault,
-                        activeColor: AppColors.primary,
+                        activeThumbColor: AppColors.primary,
                         onChanged: (v) => setState(() => _isDefault = v),
                       ),
                     ],

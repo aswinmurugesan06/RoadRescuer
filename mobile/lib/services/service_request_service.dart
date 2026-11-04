@@ -39,6 +39,9 @@ class ServiceRequestService {
     double? estimatedLaborHours,
     double? estimatedPartsCost,
     String? mechanicPrepNote,
+    double? estimatedDistanceKm,
+    double? estimatedDistanceCharge,
+    double? estimatedLaborCharge,
   }) async {
     final uid = currentUid;
     final profile = await currentProfileJson();
@@ -88,6 +91,12 @@ class ServiceRequestService {
         'estimatedPartsCost': estimatedPartsCost,
       if (mechanicPrepNote != null && mechanicPrepNote.isNotEmpty)
         'mechanicPrepNote': mechanicPrepNote,
+      if (estimatedDistanceKm != null)
+        'estimatedDistanceKm': estimatedDistanceKm,
+      if (estimatedDistanceCharge != null)
+        'estimatedDistanceCharge': estimatedDistanceCharge,
+      if (estimatedLaborCharge != null)
+        'estimatedLaborCharge': estimatedLaborCharge,
       'createdAt': now,
       'updatedAt': now,
     });
@@ -172,6 +181,12 @@ class ServiceRequestService {
       });
       transaction.update(_db.collection('users').doc(uid), {
         'availability': 'BUSY',
+        'availabilityStatus': 'BUSY',
+        'isOnline': true,
+        'isAvailable': false,
+        'status': 'BUSY',
+        'activeJobId': requestId,
+        'currentRequestId': requestId,
         'updatedAt': FieldValue.serverTimestamp(),
       });
     });
@@ -208,6 +223,12 @@ class ServiceRequestService {
       if (providerId != null && providerId.isNotEmpty) {
         transaction.update(_db.collection('users').doc(providerId), {
           'availability': 'AVAILABLE',
+          'availabilityStatus': 'AVAILABLE',
+          'isOnline': true,
+          'isAvailable': true,
+          'status': 'AVAILABLE',
+          'activeJobId': null,
+          'currentRequestId': null,
           'updatedAt': FieldValue.serverTimestamp(),
         });
       }
@@ -245,8 +266,16 @@ class ServiceRequestService {
         final providerRef = _db.collection('users').doc(providerId);
         if (normalized == 'COMPLETED') {
           // Only count the job once, even if completion is saved twice.
+          // The provider stays explicitly ONLINE and AVAILABLE. Only the
+          // manual dashboard switch may set isOnline to false.
           transaction.update(providerRef, {
             'availability': 'AVAILABLE',
+            'availabilityStatus': 'AVAILABLE',
+            'isOnline': true,
+            'isAvailable': true,
+            'status': 'AVAILABLE',
+            'activeJobId': null,
+            'currentRequestId': null,
             if (previousStatus != 'COMPLETED')
               'totalJobs': FieldValue.increment(1),
             'updatedAt': FieldValue.serverTimestamp(),
@@ -254,6 +283,12 @@ class ServiceRequestService {
         } else if (normalized == 'ACCEPTED' || normalized == 'IN_SERVICE') {
           transaction.update(providerRef, {
             'availability': 'BUSY',
+            'availabilityStatus': 'BUSY',
+            'isOnline': true,
+            'isAvailable': false,
+            'status': 'BUSY',
+            'activeJobId': requestId,
+            'currentRequestId': requestId,
             'updatedAt': FieldValue.serverTimestamp(),
           });
         }

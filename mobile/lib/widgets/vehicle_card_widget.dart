@@ -34,7 +34,7 @@ class VehicleCardWidget extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: vehicle.isDefault ? AppColors.primary.withOpacity(0.4) : border,
+              color: vehicle.isDefault ? AppColors.primary.withValues(alpha: 0.4) : border,
               width: vehicle.isDefault ? 1.5 : 1,
             ),
           ),
@@ -45,7 +45,7 @@ class VehicleCardWidget extends StatelessWidget {
                 width: compact ? 44 : 52,
                 height: compact ? 44 : 52,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.08),
+                  color: AppColors.primary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Center(
@@ -74,7 +74,7 @@ class VehicleCardWidget extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
-                              color: AppColors.primary.withOpacity(0.1),
+                              color: AppColors.primary.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: const Text(

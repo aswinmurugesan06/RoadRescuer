@@ -316,7 +316,7 @@ class AuthService {
     } on ApiException {
       rethrow;
     } catch (e) {
-      throw ApiException(
+      throw const ApiException(
         statusCode: 400,
         message: 'Google sign-in failed. Please try again.',
       );

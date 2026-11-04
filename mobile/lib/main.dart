@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'core/theme/app_theme.dart';
 import 'core/navigation/route_observer.dart';
@@ -44,10 +43,9 @@ class RoadRescueApp extends StatelessWidget {
       onGenerateRoute: AppRoutes.generateRoute,
       navigatorObservers: [appRouteObserver],
       builder: (context, child) {
-        final media = MediaQuery.of(context);
-        final scale = media.textScaler.scale(1).clamp(0.9, 1.1);
-        return MediaQuery(
-          data: media.copyWith(textScaler: TextScaler.linear(scale)),
+        return MediaQuery.withClampedTextScaling(
+          minScaleFactor: 0.85,
+          maxScaleFactor: 1.0,
           child: child ?? const SizedBox.shrink(),
         );
       },

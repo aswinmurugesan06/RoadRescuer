@@ -10,6 +10,12 @@ import 'package:road_rescue/features/assistance/screens/nearby_providers_screen.
 import 'package:road_rescue/features/assistance/screens/select_problem_screen.dart';
 import 'package:road_rescue/features/assistance/screens/cost_estimation_screen.dart';
 import 'package:road_rescue/features/assistance/screens/request_assistance_screen.dart';
+import 'package:road_rescue/features/assistance/screens/active_assistance_screen.dart';
+import 'package:road_rescue/features/auth/screens/register_screen.dart';
+import 'package:road_rescue/features/auth/screens/forgot_password_screen.dart';
+import 'package:road_rescue/features/customer/screens/customer_home_screen.dart';
+import 'package:road_rescue/features/provider/screens/provider_home_screen.dart';
+import 'package:road_rescue/features/assistance/screens/service_verification_pin_screen.dart';
 import 'package:road_rescue/features/auth/screens/login_screen.dart';
 import 'package:road_rescue/features/provider/screens/active_job_screen.dart';
 import 'package:road_rescue/features/provider/screens/create_bill_screen.dart';
@@ -34,6 +40,10 @@ ServiceRequestModel _request() => ServiceRequestModel(
       customerMobile: '+91 98765 43210',
       customerLatitude: 12.5186,
       customerLongitude: 78.2137,
+      estimatedDistanceKm: 10,
+      estimatedDistanceCharge: 75,
+      estimatedLaborCharge: 250,
+      estimatedLaborHours: 1,
     );
 
 ServiceRequestModel _aiRequest() => _request().copyWith(
@@ -173,11 +183,74 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
+    testWidgets('provider estimator has no overflow at $label',
+        (tester) async {
+      await setSize(tester, size);
+      await pumpScreen(
+        tester,
+        CostEstimationScreen(
+          vehicle: MockData.userVehicles.first,
+          isProvider: true,
+        ),
+      );
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('request assistance + AI card has no overflow at $label',
         (tester) async {
       await setSize(tester, size);
       await pumpScreen(tester, const RequestAssistanceScreen());
       await tester.pump(const Duration(milliseconds: 300));
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('active assistance + AI report has no overflow at $label',
+        (tester) async {
+      await setSize(tester, size);
+      await pumpScreen(
+        tester,
+        ActiveAssistanceScreen(request: _aiRequest()),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('register screen has no overflow at $label', (tester) async {
+      await setSize(tester, size);
+      await pumpScreen(
+        tester,
+        const RegisterScreen(initialRole: 'customer'),
+      );
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('forgot password has no overflow at $label', (tester) async {
+      await setSize(tester, size);
+      await pumpScreen(tester, const ForgotPasswordScreen());
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('customer home has no overflow at $label', (tester) async {
+      await setSize(tester, size);
+      await pumpScreen(tester, const CustomerHomeScreen());
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('provider home has no overflow at $label', (tester) async {
+      await setSize(tester, size);
+      await pumpScreen(tester, const ProviderHomeScreen());
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('customer service PIN has no overflow at $label',
+        (tester) async {
+      await setSize(tester, size);
+      await pumpScreen(
+        tester,
+        const ServiceVerificationPinScreen(pin: '4829'),
+      );
       expect(tester.takeException(), isNull);
     });
 

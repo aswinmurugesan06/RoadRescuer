@@ -158,7 +158,7 @@ class _RatingScreenState extends State<RatingScreen> {
                       width: 52,
                       height: 52,
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.12),
+                        color: AppColors.primary.withValues(alpha: 0.12),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -231,7 +231,7 @@ class _RatingScreenState extends State<RatingScreen> {
                               : Icons.star_outline_rounded,
                           color: isSelected
                               ? _ratingColor
-                              : Colors.grey.withOpacity(0.4),
+                              : Colors.grey.withValues(alpha: 0.4),
                           size: 44,
                         ),
                       ),
@@ -278,7 +278,7 @@ class _RatingScreenState extends State<RatingScreen> {
                   return FilterChip(
                     label: Text(tag),
                     selected: isSelected,
-                    selectedColor: AppColors.primary.withOpacity(0.18),
+                    selectedColor: AppColors.primary.withValues(alpha: 0.18),
                     checkmarkColor: AppColors.primary,
                     labelStyle: TextStyle(
                       fontSize: 12,
