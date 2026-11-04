@@ -3,7 +3,10 @@ import '../../../routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/constants/mock_data.dart';
 import '../../../models/vehicle_model.dart';
+import '../../../services/ai_damage_service.dart';
+import '../../../services/cost_estimation_service.dart';
 import '../../../services/vehicle_service.dart';
+import '../../../widgets/ai_damage_assessment_card.dart';
 import '../../../widgets/rr_button.dart';
 import '../../../widgets/rr_card.dart';
 
@@ -18,6 +21,7 @@ class _RequestAssistanceScreenState extends State<RequestAssistanceScreen> {
   List<VehicleModel> _vehicles = MockData.userVehicles;
   late VehicleModel _selectedVehicle;
   String _selectedService = 'Mechanic';
+  AiDamageAssessment? _aiAssessment;
 
   final List<Map<String, dynamic>> _services = [
     {
@@ -64,6 +68,37 @@ class _RequestAssistanceScreenState extends State<RequestAssistanceScreen> {
     _loadCustomerVehicles();
   }
 
+  void _selectVehicle(VehicleModel vehicle) {
+    if (_selectedVehicle.id == vehicle.id) return;
+    setState(() {
+      _selectedVehicle = vehicle;
+      _aiAssessment = null;
+    });
+  }
+
+  void _applyAiAssessment(AiDamageAssessment assessment) {
+    final category = CostEstimationService.issueCategories
+            .contains(assessment.result.mappedCategory)
+        ? assessment.result.mappedCategory
+        : 'Mechanic';
+    setState(() {
+      _aiAssessment = assessment;
+      _selectedService = category;
+    });
+  }
+
+  CostEstimate? get _aiEstimate {
+    final assessment = _aiAssessment;
+    if (assessment == null) return null;
+    return CostEstimationService.estimate(
+      vehicleType: _selectedVehicle.type,
+      issueCategory: _selectedService,
+      distanceKm: CostEstimationService.freeDistanceKm,
+      laborHours: assessment.result.estimatedLaborHours,
+      partsEstimate: assessment.result.estimatedPartsCost,
+    );
+  }
+
   Future<void> _loadCustomerVehicles() async {
     try {
       final realVehicles = await VehicleService.getMyVehicles();
@@ -71,6 +106,7 @@ class _RequestAssistanceScreenState extends State<RequestAssistanceScreen> {
         setState(() {
           _vehicles = realVehicles;
           _selectedVehicle = realVehicles.firstWhere((v) => v.isDefault, orElse: () => realVehicles.first);
+          _aiAssessment = null;
         });
       }
     } catch (_) {
@@ -140,7 +176,7 @@ class _RequestAssistanceScreenState extends State<RequestAssistanceScreen> {
                         children: _vehicles.map((v) {
                           final isSelected = v.id == _selectedVehicle.id;
                           return InkWell(
-                            onTap: () => setState(() => _selectedVehicle = v),
+                            onTap: () => _selectVehicle(v),
                             borderRadius: BorderRadius.circular(12),
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -160,7 +196,7 @@ class _RequestAssistanceScreenState extends State<RequestAssistanceScreen> {
                                     groupValue: _selectedVehicle.id,
                                     activeColor: AppColors.primary,
                                     onChanged: (val) {
-                                      setState(() => _selectedVehicle = v);
+                                      _selectVehicle(v);
                                     },
                                   ),
                                   const SizedBox(width: 8),
@@ -211,7 +247,16 @@ class _RequestAssistanceScreenState extends State<RequestAssistanceScreen> {
                         }).toList(),
                       ),
                     ),
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 24),
+                    AiDamageAssessmentCard(
+                      key: ValueKey(
+                        'ai-${_selectedVehicle.id}-${_selectedVehicle.type}',
+                      ),
+                      vehicleType: _selectedVehicle.type,
+                      estimate: _aiEstimate,
+                      onAssessment: _applyAiAssessment,
+                    ),
+                    const SizedBox(height: 24),
 
                     // Service type selector
                     const SectionHeader(title: 'Select Required Service'),
@@ -317,12 +362,16 @@ class _RequestAssistanceScreenState extends State<RequestAssistanceScreen> {
                 label: 'Continue — Select Problem',
                 icon: Icons.arrow_forward_rounded,
                 onPressed: () {
+                  final estimate = _aiEstimate;
                   Navigator.pushNamed(
                     context,
                     AppRoutes.selectProblem,
                     arguments: {
                       'serviceType': _selectedService,
                       'vehicle': _selectedVehicle,
+                      if (estimate != null) 'estimatedAmount': estimate.total,
+                      if (_aiAssessment != null)
+                        'aiAssessment': _aiAssessment,
                     },
                   );
                 },

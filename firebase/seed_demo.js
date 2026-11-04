@@ -84,6 +84,7 @@ const T = (value) => ({
 const NULL = () => ({ nullValue: null });
 const M = (fields) => ({ mapValue: { fields } });
 const A = (values) => ({ arrayValue: { values } });
+const AS = (values) => ({ arrayValue: { values: values.map((value) => S(value)) } });
 
 async function writeDoc(docPath, fields) {
   const result = await api('PATCH', `${DB_BASE}/${docPath}`, { fields });
@@ -433,9 +434,18 @@ async function main() {
     providerCategory: S('MECHANIC'),
     category: S('MECHANIC'),
     serviceType: S('Mechanic'),
-    problemDescription: S('Brake pedal feels soft — needs inspection'),
+    problemDescription: S('Front bumper dented after a minor collision — needs inspection'),
     status: S('IN_SERVICE'),
     servicePin: S('4829'),
+    aiDetectedIssue: S('Dent and paint damage on the front bumper'),
+    aiSeverity: S('Moderate'),
+    visibleIndicators: AS(['Dent on the front bumper', 'Scratches with paint loss', 'Panel gap misalignment']),
+    requiredTools: AS(['Panel pry tools', 'Dent puller', 'Sanding block', 'Paint matching kit']),
+    recommendedParts: AS(['Body filler', 'Primer and paint', 'Panel clips']),
+    estimatedLaborHours: D(2.0),
+    estimatedPartsCost: D(2500),
+    mechanicPrepNote: S('Carry dent repair and paint matching materials; confirm the panel is safe to repair roadside.'),
+    estimatedAmount: D(3000),
     customerLatitude: D(12.9250),
     customerLongitude: D(77.5938),
     customerAddress: S('Jayanagar 4th Block, Bengaluru'),
@@ -443,7 +453,6 @@ async function main() {
     vehicleModel: S('Hyundai Creta'),
     vehiclePlate: S('KA01AB1234'),
     vehicleType: S('Car'),
-    estimatedAmount: D(1200),
     providerLatitude: D(12.9340),
     providerLongitude: D(77.6100),
     acceptedAt: T(dateDaysAgo(0, 8)),
@@ -459,9 +468,17 @@ async function main() {
     providerId: NULL(),
     category: S('MECHANIC'),
     serviceType: S('Mechanic'),
-    problemDescription: S('Strange noise from the engine at idle'),
+    problemDescription: S('Dent and paint damage on the front fender'),
     status: S('PENDING'),
     servicePin: S('4829'),
+    aiDetectedIssue: S('Dent and paint damage on the front fender'),
+    aiSeverity: S('Moderate'),
+    visibleIndicators: AS(['Dent on the front fender', 'Scratches with paint loss', 'Panel gap misalignment']),
+    requiredTools: AS(['Panel pry tools', 'Dent puller', 'Sanding block', 'Paint matching kit']),
+    recommendedParts: AS(['Body filler', 'Primer and paint', 'Panel clips']),
+    estimatedLaborHours: D(2.0),
+    estimatedPartsCost: D(2500),
+    mechanicPrepNote: S('Carry dent repair and paint matching materials; confirm the panel is safe to repair roadside.'),
     customerLatitude: D(12.9550),
     customerLongitude: D(77.5850),
     customerAddress: S('MG Road, Bengaluru'),
@@ -469,7 +486,7 @@ async function main() {
     vehicleModel: S('Hyundai Creta'),
     vehiclePlate: S('KA01AB1234'),
     vehicleType: S('Car'),
-    estimatedAmount: D(800),
+    estimatedAmount: D(2500),
     createdAt: T(dateDaysAgo(0, 6.5)),
     updatedAt: T(dateDaysAgo(0, 6.5)),
   });

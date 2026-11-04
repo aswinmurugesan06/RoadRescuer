@@ -3,6 +3,7 @@ import '../../../routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/vehicle_model.dart';
 import '../../../models/service_request_model.dart';
+import '../../../services/ai_damage_service.dart';
 import '../../../services/location_service.dart';
 import '../../../services/service_request_service.dart';
 import '../../../widgets/rr_button.dart';
@@ -15,6 +16,7 @@ class LocationConfirmationScreen extends StatefulWidget {
   final String problem;
   final VehicleModel? vehicle;
   final double? estimatedAmount;
+  final AiDamageAssessment? aiAssessment;
 
   const LocationConfirmationScreen({
     super.key,
@@ -22,6 +24,7 @@ class LocationConfirmationScreen extends StatefulWidget {
     required this.problem,
     this.vehicle,
     this.estimatedAmount,
+    this.aiAssessment,
   });
 
   @override
@@ -150,6 +153,16 @@ class _LocationConfirmationScreenState
         vehicleType: widget.vehicle?.type,
         category: widget.serviceType,
         estimatedAmount: widget.estimatedAmount,
+        damageImageUrl: widget.aiAssessment?.imageUrl,
+        aiDetectedIssue: widget.aiAssessment?.result.damageTitle,
+        aiSeverity: widget.aiAssessment?.result.severity,
+        visibleIndicators: widget.aiAssessment?.result.visibleIndicators,
+        requiredTools: widget.aiAssessment?.result.requiredTools,
+        recommendedParts: widget.aiAssessment?.result.recommendedParts,
+        estimatedLaborHours:
+            widget.aiAssessment?.result.estimatedLaborHours,
+        estimatedPartsCost: widget.aiAssessment?.result.estimatedPartsCost,
+        mechanicPrepNote: widget.aiAssessment?.result.mechanicPrepNote,
       );
 
       if (!mounted) return;
@@ -467,6 +480,20 @@ class _LocationConfirmationScreenState
                                 InfoRow(
                                     label: 'Vehicle',
                                     value: vehicleDisplay),
+                                if (widget.aiAssessment != null) ...[
+                                  const Divider(),
+                                  InfoRow(
+                                    label: 'AI Damage',
+                                    value:
+                                        widget.aiAssessment!.result.damageTitle,
+                                  ),
+                                  const Divider(),
+                                  InfoRow(
+                                    label: 'AI Severity',
+                                    value:
+                                        widget.aiAssessment!.result.severity,
+                                  ),
+                                ],
                                 if (_deviceLocation != null) ...[
                                   const Divider(),
                                   InfoRow(

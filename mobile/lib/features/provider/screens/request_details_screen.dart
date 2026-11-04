@@ -6,6 +6,7 @@ import '../../../models/service_request_model.dart';
 import '../../../services/location_service.dart';
 import '../../../services/service_request_service.dart';
 import '../../../services/phone_service.dart';
+import '../../../widgets/ai_mechanic_prep_card.dart';
 import '../../../widgets/rr_button.dart';
 import '../../../widgets/rr_card.dart';
 import '../../../widgets/rr_map_view.dart';
@@ -161,6 +162,11 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
                       ),
                     ),
                     const SizedBox(height: 20),
+
+                    if (req != null && req.hasAiDamageReport) ...[
+                      AiMechanicPrepCard(request: req),
+                      const SizedBox(height: 20),
+                    ],
 
                     // Vehicle Specifications
                     const SectionHeader(title: 'Breakdown Vehicle Details'),

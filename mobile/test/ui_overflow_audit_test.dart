@@ -8,6 +8,8 @@ import 'package:road_rescue/core/constants/mock_data.dart';
 import 'package:road_rescue/core/theme/app_theme.dart';
 import 'package:road_rescue/features/assistance/screens/nearby_providers_screen.dart';
 import 'package:road_rescue/features/assistance/screens/select_problem_screen.dart';
+import 'package:road_rescue/features/assistance/screens/cost_estimation_screen.dart';
+import 'package:road_rescue/features/assistance/screens/request_assistance_screen.dart';
 import 'package:road_rescue/features/auth/screens/login_screen.dart';
 import 'package:road_rescue/features/provider/screens/active_job_screen.dart';
 import 'package:road_rescue/features/provider/screens/create_bill_screen.dart';
@@ -32,6 +34,30 @@ ServiceRequestModel _request() => ServiceRequestModel(
       customerMobile: '+91 98765 43210',
       customerLatitude: 12.5186,
       customerLongitude: 78.2137,
+    );
+
+ServiceRequestModel _aiRequest() => _request().copyWith(
+      damageImageUrl: 'https://res.cloudinary.com/demo/image/upload/damage.jpg',
+      aiDetectedIssue: 'Front left tyre is flat',
+      aiSeverity: 'Severe',
+      visibleIndicators: const [
+        'Tyre is visibly deflated',
+        'Nail embedded in the tread',
+      ],
+      requiredTools: const [
+        'Hydraulic jack',
+        'Wheel spanner',
+        'Tyre levers',
+        'Portable inflator',
+      ],
+      recommendedParts: const [
+        'Replacement tyre',
+        'Valve stem',
+      ],
+      estimatedLaborHours: 1.5,
+      estimatedPartsCost: 1800,
+      mechanicPrepNote:
+          'Bring a matching 17-inch tyre and a portable inflator before departing.',
     );
 
 void main() {
@@ -134,6 +160,31 @@ void main() {
     testWidgets('create bill has no overflow at $label', (tester) async {
       await setSize(tester, size);
       await pumpScreen(tester, CreateBillScreen(request: _request()));
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('cost estimator + AI card has no overflow at $label',
+        (tester) async {
+      await setSize(tester, size);
+      await pumpScreen(
+        tester,
+        CostEstimationScreen(vehicle: MockData.userVehicles.first),
+      );
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('request assistance + AI card has no overflow at $label',
+        (tester) async {
+      await setSize(tester, size);
+      await pumpScreen(tester, const RequestAssistanceScreen());
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('active job AI prep card has no overflow at $label',
+        (tester) async {
+      await setSize(tester, size);
+      await pumpScreen(tester, ActiveJobScreen(request: _aiRequest()));
       expect(tester.takeException(), isNull);
     });
   }

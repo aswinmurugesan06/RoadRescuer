@@ -18,6 +18,7 @@ import '../features/vehicle/screens/vehicle_details_screen.dart';
 import '../models/vehicle_model.dart';
 import '../models/service_request_model.dart';
 import '../models/bill_model.dart';
+import '../services/ai_damage_service.dart';
 
 // Assistance
 import '../features/assistance/screens/request_assistance_screen.dart';
@@ -136,6 +137,7 @@ class AppRoutes {
         serviceType: args?['serviceType'] ?? 'Mechanic',
         vehicle: args?['vehicle'] as VehicleModel?,
         estimatedAmount: (args?['estimatedAmount'] as num?)?.toDouble(),
+        aiAssessment: args?['aiAssessment'] as AiDamageAssessment?,
       ));
     }
     if (name == locationConfirm) {
@@ -145,6 +147,7 @@ class AppRoutes {
         problem: args?['problem'] ?? '',
         vehicle: args?['vehicle'] as VehicleModel?,
         estimatedAmount: (args?['estimatedAmount'] as num?)?.toDouble(),
+        aiAssessment: args?['aiAssessment'] as AiDamageAssessment?,
       ));
     }
     if (name == nearbyProviders) {

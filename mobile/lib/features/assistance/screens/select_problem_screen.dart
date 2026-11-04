@@ -3,6 +3,7 @@ import '../../../routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/constants/mock_data.dart';
 import '../../../models/vehicle_model.dart';
+import '../../../services/ai_damage_service.dart';
 import '../../../widgets/rr_button.dart';
 import '../../../widgets/rr_card.dart';
 import '../../../widgets/rr_text_field.dart';
@@ -11,12 +12,14 @@ class SelectProblemScreen extends StatefulWidget {
   final String serviceType;
   final VehicleModel? vehicle;
   final double? estimatedAmount;
+  final AiDamageAssessment? aiAssessment;
 
   const SelectProblemScreen({
     super.key,
     required this.serviceType,
     this.vehicle,
     this.estimatedAmount,
+    this.aiAssessment,
   });
 
   @override
@@ -88,6 +91,61 @@ class _SelectProblemScreenState extends State<SelectProblemScreen> {
                         color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
                       ),
                     ),
+                    if (widget.aiAssessment != null) ...[
+                      const SizedBox(height: 14),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.06),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppColors.primary.withOpacity(0.18),
+                          ),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(
+                              Icons.auto_awesome_rounded,
+                              size: 18,
+                              color: AppColors.primary,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    widget.aiAssessment!.result.damageTitle,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '${widget.aiAssessment!.result.severity} • '
+                                    '${widget.aiAssessment!.result.visibleIndicators.length} visible indicators • '
+                                    'AI category: ${widget.aiAssessment!.result.mappedCategory}',
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 9.5,
+                                      height: 1.3,
+                                      color: AppColors.textSecondaryLight,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 20),
 
                     // Problem options list
@@ -222,6 +280,7 @@ class _SelectProblemScreenState extends State<SelectProblemScreen> {
                           'problem': _finalProblemDescription,
                           'vehicle': widget.vehicle,
                           'estimatedAmount': widget.estimatedAmount,
+                          'aiAssessment': widget.aiAssessment,
                         },
                       );
                     },

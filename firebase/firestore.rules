@@ -40,6 +40,20 @@ service cloud.firestore {
       return data.keys().hasAny(['providerId']) ? data.providerId : null;
     }
 
+    // Optional AI damage fields must keep their expected types when present.
+    function aiFieldsValid(data) {
+      return (!data.keys().hasAny(['damageImageUrl']) || data.damageImageUrl is string)
+        && (!data.keys().hasAny(['aiDetectedIssue']) || data.aiDetectedIssue is string)
+        && (!data.keys().hasAny(['aiSeverity']) || data.aiSeverity is string)
+        && (!data.keys().hasAny(['visibleIndicators']) || data.visibleIndicators is list)
+        && (!data.keys().hasAny(['requiredTools']) || data.requiredTools is list)
+        && (!data.keys().hasAny(['recommendedParts']) || data.recommendedParts is list)
+        && (!data.keys().hasAny(['estimatedLaborHours']) || data.estimatedLaborHours is number)
+        && (!data.keys().hasAny(['estimatedPartsCost']) || data.estimatedPartsCost is number)
+        && (!data.keys().hasAny(['mechanicPrepNote']) || data.mechanicPrepNote is string)
+        && (!data.keys().hasAny(['estimatedAmount']) || data.estimatedAmount is number);
+    }
+
     match /users/{userId} {
       allow read: if signedIn();
 
@@ -69,7 +83,8 @@ service cloud.firestore {
       allow read: if signedIn();
 
       allow create: if signedIn()
-        && request.resource.data.customerId == uid();
+        && request.resource.data.customerId == uid()
+        && aiFieldsValid(request.resource.data);
 
       allow update: if signedIn() && (
         isAdmin()

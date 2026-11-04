@@ -30,6 +30,15 @@ class ServiceRequestService {
     String? vehicleType,
     String? category,
     double? estimatedAmount,
+    String? damageImageUrl,
+    String? aiDetectedIssue,
+    String? aiSeverity,
+    List<String>? visibleIndicators,
+    List<String>? requiredTools,
+    List<String>? recommendedParts,
+    double? estimatedLaborHours,
+    double? estimatedPartsCost,
+    String? mechanicPrepNote,
   }) async {
     final uid = currentUid;
     final profile = await currentProfileJson();
@@ -61,6 +70,24 @@ class ServiceRequestService {
       if (vehicleType != null && vehicleType.isNotEmpty)
         'vehicleType': vehicleType,
       if (estimatedAmount != null) 'estimatedAmount': estimatedAmount,
+      if (damageImageUrl != null && damageImageUrl.isNotEmpty)
+        'damageImageUrl': damageImageUrl,
+      if (aiDetectedIssue != null && aiDetectedIssue.isNotEmpty)
+        'aiDetectedIssue': aiDetectedIssue,
+      if (aiSeverity != null && aiSeverity.isNotEmpty)
+        'aiSeverity': aiSeverity,
+      if (visibleIndicators != null && visibleIndicators.isNotEmpty)
+        'visibleIndicators': visibleIndicators,
+      if (requiredTools != null && requiredTools.isNotEmpty)
+        'requiredTools': requiredTools,
+      if (recommendedParts != null && recommendedParts.isNotEmpty)
+        'recommendedParts': recommendedParts,
+      if (estimatedLaborHours != null)
+        'estimatedLaborHours': estimatedLaborHours,
+      if (estimatedPartsCost != null)
+        'estimatedPartsCost': estimatedPartsCost,
+      if (mechanicPrepNote != null && mechanicPrepNote.isNotEmpty)
+        'mechanicPrepNote': mechanicPrepNote,
       'createdAt': now,
       'updatedAt': now,
     });

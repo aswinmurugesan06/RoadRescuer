@@ -8,6 +8,10 @@
 	<string>RoadRescue</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>RoadRescue requires your location in foreground to locate your vehicle for roadside assistance dispatch and tracking.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>RoadRescue uses the camera to photograph vehicle damage for AI-assisted repair preparation.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>RoadRescue uses your photo library to analyse vehicle damage and prepare the right tools and parts.</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

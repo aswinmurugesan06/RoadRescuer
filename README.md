@@ -43,6 +43,49 @@ calculates a transparent estimate from:
 The estimate is passed into the service request as `estimatedAmount`, so the
 customer and provider see the same expectation before work begins.
 
+### AI Visual Damage Assessment
+
+Customers can photograph the damaged area from **Request Assistance** or the
+**Dynamic Cost Estimator**. The photo is uploaded to Cloudinary and analysed by
+Gemini Vision, then the result is used to:
+
+- select the mapped service category (`Puncture`, `Mechanic`, `Tow`, `Battery`, `Fuel`)
+- auto-fill labour hours and the parts estimate
+- recalculate the low/high range and `estimatedAmount`
+- prepare the provider with required tools, spare parts and a mechanic prep note
+
+The app uses direct REST calls only (`http`), with no heavy AI SDK. If
+`GEMINI_API_KEY` or the Cloudinary credentials are missing, or a remote call
+fails, a deterministic smart mock keeps the flow working for tests and offline
+demos. `gemini-2.5-flash` is the default model; the service automatically tries
+`gemini-3.5-flash` / `gemini-3.8-flash` when the configured model is retired or
+temporarily unavailable.
+
+Provide the credentials at build/run time (never commit them):
+
+```bash
+cd mobile
+flutter run -d chrome --dart-define-from-file=firebase_test_config.json
+```
+
+Required keys in the local `firebase_test_config.json`:
+
+```json
+{
+  "GEMINI_API_KEY": "<key>",
+  "GEMINI_MODEL": "gemini-3.5-flash",
+  "CLOUDINARY_CLOUD_NAME": "<cloud-name>",
+  "CLOUDINARY_UPLOAD_PRESET": "<unsigned-preset>"
+}
+```
+
+The customer sees the damage photo, detected issue, severity, visible
+indicators and updated estimate. The provider sees the same report with
+required tools, recommended spare parts and the prep note on the incoming
+request and active-job checklist. The admin console shows the thumbnail,
+severity, tools and parts in the Service Requests detail view.
+
+
 ### Run Flutter App
 
 ```bash

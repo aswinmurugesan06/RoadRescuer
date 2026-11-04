@@ -1018,12 +1018,66 @@ function providersView() {
 
 // ── Requests ────────────────────────────────────────────────────────────
 
+function requestAiDamageCard(request) {
+  const issue = request.aiDetectedIssue || '';
+  const severity = String(request.aiSeverity || '').toUpperCase();
+  const image = request.damageImageUrl || '';
+  const indicators = Array.isArray(request.visibleIndicators) ? request.visibleIndicators.filter(Boolean) : [];
+  const tools = Array.isArray(request.requiredTools) ? request.requiredTools.filter(Boolean) : [];
+  const parts = Array.isArray(request.recommendedParts) ? request.recommendedParts.filter(Boolean) : [];
+
+  if (!issue && !image && !tools.length && !parts.length && !indicators.length) return '';
+
+  const severityClass = severity === 'SEVERE'
+    ? 'bg-red-100 text-red-700'
+    : severity === 'LOW'
+      ? 'bg-emerald-100 text-emerald-700'
+      : 'bg-amber-100 text-amber-700';
+
+  const chip = (text, cls) => `<span class="rounded-full px-2 py-0.5 text-[8px] font-bold ${cls}">${esc(text)}</span>`;
+
+  return glassCard(`
+    <div class="p-5">
+      <div class="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <p class="text-[8px] font-bold uppercase tracking-[0.18em] text-primary">AI vision</p>
+          <h3 class="mt-1 text-sm font-extrabold">AI damage assessment</h3>
+        </div>
+        ${severity ? `<span class="rounded-full px-2.5 py-1 text-[8px] font-bold ${severityClass}">${esc(severity)}</span>` : ''}
+      </div>
+      <div class="mt-3 grid gap-4 ${image ? 'md:grid-cols-[190px_1fr]' : ''}">
+        ${image ? `<img src="${esc(image)}" alt="Vehicle damage" loading="lazy" class="h-40 w-full rounded-2xl object-cover" />` : ''}
+        <div class="space-y-2.5">
+          ${issue ? `<p class="text-sm font-bold">${esc(issue)}</p>` : ''}
+          ${indicators.length ? `<div>
+            <p class="text-[8px] font-bold uppercase tracking-wider text-on-surface-variant">Visible indicators</p>
+            <div class="mt-1 flex flex-wrap gap-1.5">${indicators.map((item) => chip(item, 'bg-red-50 text-red-700')).join('')}</div>
+          </div>` : ''}
+          ${tools.length ? `<div>
+            <p class="text-[8px] font-bold uppercase tracking-wider text-on-surface-variant">Required tools to bring</p>
+            <div class="mt-1 flex flex-wrap gap-1.5">${tools.map((item) => chip(item, 'bg-primary-fixed text-on-primary-fixed')).join('')}</div>
+          </div>` : ''}
+          ${parts.length ? `<div>
+            <p class="text-[8px] font-bold uppercase tracking-wider text-on-surface-variant">Recommended spare parts</p>
+            <div class="mt-1 flex flex-wrap gap-1.5">${parts.map((item) => chip(item, 'bg-amber-50 text-amber-700')).join('')}</div>
+          </div>` : ''}
+          ${request.mechanicPrepNote ? `<div class="rounded-xl bg-surface-container-low p-3 text-[9px] leading-relaxed text-on-surface-variant"><span class="font-bold text-on-surface">Mechanic prep:</span> ${esc(request.mechanicPrepNote)}</div>` : ''}
+          ${request.estimatedLaborHours != null || request.estimatedPartsCost != null ? `<div class="flex flex-wrap gap-3 text-[9px] text-on-surface-variant">
+            <span>Labour <b class="text-on-surface">${Number(request.estimatedLaborHours || 0).toFixed(2)}h</b></span>
+            <span>Parts <b class="text-on-surface">${money(request.estimatedPartsCost || 0)}</b></span>
+          </div>` : ''}
+        </div>
+      </div>
+    </div>
+  `);
+}
+
 function requestsView() {
   const filtered = sortDate(state.requests, 'createdAt').filter((r) => {
     const status = String(r.status || '').toUpperCase();
     const statusOk = state.requestFilter === 'ALL' || status === state.requestFilter;
     const term = (state.requestSearch || state.globalSearch).trim().toLowerCase();
-    const hay = `${r.serviceType || ''} ${r.customerName || ''} ${r.providerName || ''} ${r.vehiclePlate || ''} ${r.problemDescription || ''}`.toLowerCase();
+    const hay = `${r.serviceType || ''} ${r.customerName || ''} ${r.providerName || ''} ${r.vehiclePlate || ''} ${r.problemDescription || ''} ${r.aiDetectedIssue || ''} ${Array.isArray(r.requiredTools) ? r.requiredTools.join(' ') : ''}`.toLowerCase();
     return statusOk && (!term || hay.includes(term));
   });
   const selected = requestById(state.selectedRequest) || filtered[0] || state.requests[0] || null;
@@ -1098,6 +1152,8 @@ function requestsView() {
                 </div>
               </div>
             `)}
+
+            ${requestAiDamageCard(selected)}
 
             ${glassCard(`
               <div class="p-5">

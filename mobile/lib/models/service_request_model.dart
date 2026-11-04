@@ -64,6 +64,15 @@ class ServiceRequestModel {
   final String? customerAddress;
   final String? cancellationReason;
   final String? servicePin;
+  final String? damageImageUrl;
+  final String? aiDetectedIssue;
+  final String? aiSeverity;
+  final List<String> visibleIndicators;
+  final List<String> requiredTools;
+  final List<String> recommendedParts;
+  final double? estimatedLaborHours;
+  final double? estimatedPartsCost;
+  final String? mechanicPrepNote;
 
   const ServiceRequestModel({
     required this.id,
@@ -89,7 +98,23 @@ class ServiceRequestModel {
     this.customerAddress,
     this.cancellationReason,
     this.servicePin,
+    this.damageImageUrl,
+    this.aiDetectedIssue,
+    this.aiSeverity,
+    this.visibleIndicators = const [],
+    this.requiredTools = const [],
+    this.recommendedParts = const [],
+    this.estimatedLaborHours,
+    this.estimatedPartsCost,
+    this.mechanicPrepNote,
   });
+
+  bool get hasAiDamageReport =>
+      (damageImageUrl?.isNotEmpty ?? false) ||
+      (aiDetectedIssue?.isNotEmpty ?? false) ||
+      visibleIndicators.isNotEmpty ||
+      requiredTools.isNotEmpty ||
+      recommendedParts.isNotEmpty;
 
   factory ServiceRequestModel.fromJson(Map<String, dynamic> json) {
     final statusStr = (json['status'] as String? ?? 'PENDING').toUpperCase();
@@ -171,6 +196,16 @@ class ServiceRequestModel {
       customerAddress: addr,
       cancellationReason: json['cancellationReason'] as String?,
       servicePin: json['servicePin'] as String?,
+      damageImageUrl: json['damageImageUrl'] as String?,
+      aiDetectedIssue: json['aiDetectedIssue'] as String?,
+      aiSeverity: json['aiSeverity'] as String?,
+      visibleIndicators: _stringList(json['visibleIndicators']),
+      requiredTools: _stringList(json['requiredTools']),
+      recommendedParts: _stringList(json['recommendedParts']),
+      estimatedLaborHours:
+          (json['estimatedLaborHours'] as num?)?.toDouble(),
+      estimatedPartsCost: (json['estimatedPartsCost'] as num?)?.toDouble(),
+      mechanicPrepNote: json['mechanicPrepNote'] as String?,
     );
   }
 
@@ -198,6 +233,15 @@ class ServiceRequestModel {
     String? customerAddress,
     String? cancellationReason,
     String? servicePin,
+    String? damageImageUrl,
+    String? aiDetectedIssue,
+    String? aiSeverity,
+    List<String>? visibleIndicators,
+    List<String>? requiredTools,
+    List<String>? recommendedParts,
+    double? estimatedLaborHours,
+    double? estimatedPartsCost,
+    String? mechanicPrepNote,
   }) {
     return ServiceRequestModel(
       id: id ?? this.id,
@@ -223,6 +267,16 @@ class ServiceRequestModel {
       customerAddress: customerAddress ?? this.customerAddress,
       cancellationReason: cancellationReason ?? this.cancellationReason,
       servicePin: servicePin ?? this.servicePin,
+      damageImageUrl: damageImageUrl ?? this.damageImageUrl,
+      aiDetectedIssue: aiDetectedIssue ?? this.aiDetectedIssue,
+      aiSeverity: aiSeverity ?? this.aiSeverity,
+      visibleIndicators: visibleIndicators ?? this.visibleIndicators,
+      requiredTools: requiredTools ?? this.requiredTools,
+      recommendedParts: recommendedParts ?? this.recommendedParts,
+      estimatedLaborHours:
+          estimatedLaborHours ?? this.estimatedLaborHours,
+      estimatedPartsCost: estimatedPartsCost ?? this.estimatedPartsCost,
+      mechanicPrepNote: mechanicPrepNote ?? this.mechanicPrepNote,
     );
   }
 
@@ -247,4 +301,13 @@ class ServiceRequestModel {
         return '🔧';
     }
   }
+}
+
+List<String> _stringList(dynamic value) {
+  if (value is! List) return const [];
+  return value
+      .whereType<String>()
+      .map((item) => item.trim())
+      .where((item) => item.isNotEmpty)
+      .toList(growable: false);
 }

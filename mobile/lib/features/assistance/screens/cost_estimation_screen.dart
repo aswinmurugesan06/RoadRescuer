@@ -4,7 +4,9 @@ import 'package:flutter/services.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/vehicle_model.dart';
 import '../../../routes/app_routes.dart';
+import '../../../services/ai_damage_service.dart';
 import '../../../services/cost_estimation_service.dart';
+import '../../../widgets/ai_damage_assessment_card.dart';
 import '../../../widgets/glass.dart';
 
 class CostEstimationScreen extends StatefulWidget {
@@ -28,6 +30,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
   double _laborHours = 1;
   double _partsEstimate = 0;
   final _partsController = TextEditingController();
+  AiDamageAssessment? _aiAssessment;
 
   @override
   void initState() {
@@ -56,7 +59,32 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
         partsEstimate: _partsEstimate,
       );
 
+  void _applyAiAssessment(AiDamageAssessment assessment) {
+    final result = assessment.result;
+    final category = CostEstimationService.issueCategories
+            .contains(result.mappedCategory)
+        ? result.mappedCategory
+        : 'Mechanic';
+
+    setState(() {
+      _aiAssessment = assessment;
+      _issueCategory = category;
+      _laborHours = result.estimatedLaborHours.clamp(0.0, 8.0).toDouble();
+      _partsEstimate = result.estimatedPartsCost;
+      _partsController.text =
+          _partsEstimate <= 0 ? '' : _partsEstimate.toStringAsFixed(0);
+    });
+  }
+
   void _requestService() {
+    final assessment = _aiAssessment;
+    final adjustedAssessment = assessment?.copyWith(
+      result: assessment.result.copyWith(
+        estimatedLaborHours: _laborHours,
+        estimatedPartsCost: _partsEstimate,
+      ),
+    );
+
     Navigator.pushNamed(
       context,
       AppRoutes.selectProblem,
@@ -64,6 +92,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
         'serviceType': _issueCategory,
         'vehicle': widget.vehicle,
         'estimatedAmount': _estimate.total,
+        'aiAssessment': adjustedAssessment,
       },
     );
   }
@@ -84,6 +113,13 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
               children: [
                 _buildHeader(isDark),
                 const SizedBox(height: 16),
+                AiDamageAssessmentCard(
+                  key: ValueKey('ai-$_vehicleType'),
+                  vehicleType: _vehicleType,
+                  estimate: estimate,
+                  onAssessment: _applyAiAssessment,
+                ),
+                const SizedBox(height: 14),
                 _buildInputs(isDark),
                 const SizedBox(height: 14),
                 _buildEstimateCard(isDark, estimate),
@@ -187,7 +223,12 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
                 .map((type) => DropdownMenuItem(value: type, child: Text(type)))
                 .toList(),
             onChanged: (value) {
-              if (value != null) setState(() => _vehicleType = value);
+              if (value != null) {
+                setState(() {
+                  _vehicleType = value;
+                  _aiAssessment = null;
+                });
+              }
             },
           ),
           const SizedBox(height: 12),
@@ -296,20 +337,26 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
         children: [
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.14),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: Colors.white.withOpacity(0.2)),
-                ),
-                child: const Text(
-                  'ESTIMATED RANGE',
-                  style: TextStyle(
-                    fontSize: 8.5,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.7,
-                    color: Colors.white,
+              Flexible(
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.14),
+                    borderRadius: BorderRadius.circular(999),
+                    border:
+                        Border.all(color: Colors.white.withOpacity(0.2)),
+                  ),
+                  child: const Text(
+                    'ESTIMATED RANGE',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 8.5,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.7,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
@@ -317,9 +364,13 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
               const Icon(Icons.verified_user_rounded,
                   size: 16, color: Colors.white70),
               const SizedBox(width: 4),
-              const Text(
-                'Transparent pricing',
-                style: TextStyle(fontSize: 9, color: Colors.white70),
+              const Flexible(
+                child: Text(
+                  'Transparent pricing',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 9, color: Colors.white70),
+                ),
               ),
             ],
           ),
@@ -340,12 +391,12 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
             style: const TextStyle(fontSize: 10, color: Colors.white70),
           ),
           const SizedBox(height: 14),
-          Row(
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
             children: [
               _estimatePill('$_issueCategory', Icons.build_rounded),
-              const SizedBox(width: 6),
               _estimatePill(_vehicleType, Icons.directions_car_rounded),
-              const SizedBox(width: 6),
               _estimatePill('${_distanceKm.toStringAsFixed(0)} km',
                   Icons.route_rounded),
             ],
@@ -357,6 +408,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
 
   Widget _estimatePill(String label, IconData icon) {
     return Container(
+      constraints: const BoxConstraints(maxWidth: 260),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.13),
@@ -367,12 +419,16 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
         children: [
           Icon(icon, size: 12, color: Colors.white70),
           const SizedBox(width: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 9,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
             ),
           ),
         ],
