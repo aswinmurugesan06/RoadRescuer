@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../core/utils/distance_util.dart';
 import '../models/provider_model.dart';
 import 'api_client.dart';
 import 'firebase/firestore_helpers.dart';
@@ -94,6 +95,41 @@ class ProviderService {
       'updatedAt': FieldValue.serverTimestamp(),
     });
     return _profileFromUserDoc();
+  }
+
+  /// Distance to the nearest AVAILABLE provider for the customer's GPS point.
+  ///
+  /// Used by the customer cost estimator to auto-calculate the travel distance
+  /// without exposing a manual distance slider. Returns null when no provider
+  /// coordinates are available.
+  static Future<double?> nearestAvailableProviderDistanceKm({
+    required double latitude,
+    required double longitude,
+  }) async {
+    final snapshot = await _db
+        .collection('users')
+        .where('availability', isEqualTo: 'AVAILABLE')
+        .limit(80)
+        .get();
+
+    double? nearest;
+    for (final doc in snapshot.docs) {
+      final data = doc.data();
+      if ((data['role'] as String? ?? '').toUpperCase() != 'PROVIDER') {
+        continue;
+      }
+      final lat = (data['latitude'] as num?)?.toDouble();
+      final lng = (data['longitude'] as num?)?.toDouble();
+      if (lat == null || lng == null) continue;
+      final distance = DistanceUtil.calculateDistance(
+        latitude,
+        longitude,
+        lat,
+        lng,
+      );
+      if (nearest == null || distance < nearest) nearest = distance;
+    }
+    return nearest;
   }
 
   /// All service requests assigned to this provider.

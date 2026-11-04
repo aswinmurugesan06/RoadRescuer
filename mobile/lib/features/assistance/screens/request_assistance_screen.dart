@@ -5,6 +5,8 @@ import '../../../core/constants/mock_data.dart';
 import '../../../models/vehicle_model.dart';
 import '../../../services/ai_damage_service.dart';
 import '../../../services/cost_estimation_service.dart';
+import '../../../services/location_service.dart';
+import '../../../services/provider_service.dart';
 import '../../../services/vehicle_service.dart';
 import '../../../widgets/ai_damage_assessment_card.dart';
 import '../../../widgets/cost_breakdown_card.dart';
@@ -24,6 +26,7 @@ class _RequestAssistanceScreenState extends State<RequestAssistanceScreen> {
   String _selectedService = 'Mechanic';
   AiDamageAssessment? _aiAssessment;
   int _aiVersion = 0;
+  double _autoDistanceKm = CostEstimationService.defaultDistanceKm;
 
   final List<Map<String, dynamic>> _services = [
     {
@@ -68,6 +71,25 @@ class _RequestAssistanceScreenState extends State<RequestAssistanceScreen> {
     super.initState();
     _selectedVehicle = _vehicles.firstWhere((v) => v.isDefault, orElse: () => _vehicles.first);
     _loadCustomerVehicles();
+    _loadAutoDistance();
+  }
+
+  Future<void> _loadAutoDistance() async {
+    try {
+      final location = await LocationService.getLastKnownLocation();
+      if (location == null) return;
+      final nearest = await ProviderService.nearestAvailableProviderDistanceKm(
+        latitude: location.latitude,
+        longitude: location.longitude,
+      );
+      if (nearest != null && mounted) {
+        setState(() {
+          _autoDistanceKm = nearest.clamp(0.0, 50.0).toDouble();
+        });
+      }
+    } catch (_) {
+      // GPS/Firestore unavailable — keep the safe default distance.
+    }
   }
 
   void _selectVehicle(VehicleModel vehicle) {
@@ -106,7 +128,7 @@ class _RequestAssistanceScreenState extends State<RequestAssistanceScreen> {
     return CostEstimationService.estimate(
       vehicleType: _selectedVehicle.type,
       issueCategory: _selectedService,
-      distanceKm: CostEstimationService.defaultDistanceKm,
+      distanceKm: _autoDistanceKm,
       laborHours: assessment?.result.estimatedLaborHours ??
           CostEstimationService.autoLaborHours(
             _selectedService,

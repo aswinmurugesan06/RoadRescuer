@@ -6,6 +6,8 @@ import '../../../models/vehicle_model.dart';
 import '../../../routes/app_routes.dart';
 import '../../../services/ai_damage_service.dart';
 import '../../../services/cost_estimation_service.dart';
+import '../../../services/location_service.dart';
+import '../../../services/provider_service.dart';
 import '../../../widgets/ai_damage_assessment_card.dart';
 import '../../../widgets/cost_breakdown_card.dart';
 import '../../../widgets/glass.dart';
@@ -65,6 +67,25 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
         ? widget.initialServiceType!
         : 'Mechanic';
     _laborHours = CostEstimationService.autoLaborHours(_issueCategory);
+    if (!_isProvider) _loadAutoDistance();
+  }
+
+  Future<void> _loadAutoDistance() async {
+    try {
+      final location = await LocationService.getLastKnownLocation();
+      if (location == null) return;
+      final nearest = await ProviderService.nearestAvailableProviderDistanceKm(
+        latitude: location.latitude,
+        longitude: location.longitude,
+      );
+      if (nearest != null && mounted) {
+        setState(() {
+          _distanceKm = nearest.clamp(0.0, 50.0).toDouble();
+        });
+      }
+    } catch (_) {
+      // GPS/Firestore unavailable — keep the safe default distance.
+    }
   }
 
   @override

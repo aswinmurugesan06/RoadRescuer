@@ -31,17 +31,32 @@ The Flutter app serves two user roles in a single application:
 
 ### Dynamic Cost Estimation
 
-Both roles can open the **Dynamic Cost Estimator** from the home/pro tools. It
-calculates a transparent estimate from:
+The estimator is role-aware:
 
-- vehicle type (Bike → Heavy Vehicle multiplier)
-- issue category (Mechanic, Puncture, Tow, Battery, Fuel)
-- distance beyond the 5 km free radius
-- labor hours and optional parts
-- 18% GST
+- **Customer (read-only):** no labour, parts or distance sliders. Labour is
+  auto-allocated from the AI assessment or from category baselines (Puncture /
+  Battery / Fuel 0.5h, Tow 1.0h, Mechanic 1.5h), scaled by severity. Travel
+  distance is auto-detected from the customer's GPS to the nearest available
+  provider, with a safe 10 km fallback.
+- **Provider (manual):** labour hours, distance and parts remain editable in the
+  Provider Estimator and Create Bill screens.
 
-The estimate is passed into the service request as `estimatedAmount`, so the
-customer and provider see the same expectation before work begins.
+Pricing formula:
+
+```
+distanceCharge = max(0, distanceKm - 5) * 15
+labourCharge   = labourHours * 250
+serviceSubtotal = (199 + distanceCharge + labourCharge) * vehicleMultiplier
+subtotal        = serviceSubtotal + partsEstimate
+GST             = subtotal * 0.18
+total           = subtotal + GST
+```
+
+Vehicle multipliers run from Bike `0.85` to Heavy Vehicle `1.60`. The customer
+sees a non-editable breakdown with callout, distance in km and ₹, labour,
+parts, GST and the low/high range. The same estimate components are persisted on
+the request, so the provider sees the customer's initial expectation on the job
+sheet.
 
 ### AI Visual Damage Assessment
 
@@ -54,12 +69,17 @@ Gemini Vision, then the result is used to:
 - recalculate the low/high range and `estimatedAmount`
 - prepare the provider with required tools, spare parts and a mechanic prep note
 
-The app uses direct REST calls only (`http`), with no heavy AI SDK. If
-`GEMINI_API_KEY` or the Cloudinary credentials are missing, or a remote call
-fails, a deterministic smart mock keeps the flow working for tests and offline
-demos. `gemini-2.5-flash` is the default model; the service automatically tries
-`gemini-3.5-flash` / `gemini-3.8-flash` when the configured model is retired or
-temporarily unavailable.
+The app uses direct REST calls only (`http`), with no heavy AI SDK. Images are
+compressed to 800×800 / quality 65. If Cloudinary is unavailable, the compressed
+JPEG is stored as a Base64 data URL in `damageImageUrl`, so the provider can see
+the photo from another session or device. `DamagePhotoView` renders both `http`
+and `data:image` values.
+
+If `GEMINI_API_KEY` is missing, quota is exceeded, the device is offline, or a
+model call fails, a deterministic category-aware mock keeps the flow working.
+The model chain is `gemini-2.5-flash` → `gemini-2.0-flash` → `gemini-1.5-flash`
+→ `gemini-3.5-flash` → `gemini-3.8-flash`; responses are sanitised before JSON
+decoding and every call has a 12-second timeout.
 
 Provide the credentials at build/run time (never commit them):
 
