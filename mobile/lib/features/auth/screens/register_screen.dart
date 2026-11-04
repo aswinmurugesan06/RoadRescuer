@@ -5,6 +5,7 @@ import '../../../core/utils/validators.dart';
 import '../../../widgets/rr_text_field.dart';
 import '../../../widgets/rr_button.dart';
 import '../../../widgets/app_logo.dart';
+import '../../../widgets/google_logo.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/api_client.dart';
 
@@ -363,25 +364,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   width: double.infinity,
                   child: OutlinedButton.icon(
                     onPressed: _googleLoading ? null : _googleSignUp,
-                    icon: Container(
-                      width: 22,
-                      height: 22,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.borderLight),
-                      ),
-                      child: const Center(
-                        child: Text(
-                          'G',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w900,
-                            color: Color(0xFF4285F4),
-                          ),
-                        ),
-                      ),
-                    ),
+                    icon: const GoogleLogo(size: 20),
                     label: Text(
                       _googleLoading
                           ? 'Connecting to Google…'

@@ -9,6 +9,7 @@ import '../../../services/auth_service.dart';
 import '../../../services/phone_service.dart';
 import '../../../widgets/app_logo.dart';
 import '../../../widgets/glass.dart';
+import '../../../widgets/google_logo.dart';
 
 // Design tokens mirrored from the RoadRescue auth mockup.
 const Color _surfaceContainer = Color(0xFFE9EDFF);
@@ -664,7 +665,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     height: 16,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : _googleMark(),
+                : const GoogleLogo(size: 18),
             onTap: _googleLoading ? null : _googleSignIn,
           ),
         ),
@@ -708,28 +709,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _googleMark() {
-    return Container(
-      width: 19,
-      height: 19,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-        border: Border.all(color: _outlineVariant.withValues(alpha: 0.6)),
-      ),
-      child: const Center(
-        child: Text(
-          'G',
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w900,
-            color: Color(0xFF4285F4),
           ),
         ),
       ),
