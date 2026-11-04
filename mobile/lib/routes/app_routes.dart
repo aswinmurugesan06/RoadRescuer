@@ -40,6 +40,8 @@ import '../features/payment/screens/receipt_screen.dart';
 // Profile
 import '../features/profile/screens/complaint_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
+import '../features/profile/screens/faq_screen.dart';
+import '../features/profile/screens/privacy_policy_screen.dart';
 import '../features/customer/screens/notifications_screen.dart';
 
 // Provider
@@ -84,6 +86,8 @@ class AppRoutes {
 
   static const String complaint = '/complaint';
   static const String profile = '/profile';
+  static const String faq = '/faq';
+  static const String privacyPolicy = '/privacy-policy';
   static const String notifications = '/notifications';
 
   static const String provider = '/provider';
@@ -211,6 +215,8 @@ class AppRoutes {
 
     if (name == complaint) return _slide(const ComplaintScreen());
     if (name == profile) return _slide(const ProfileScreen());
+    if (name == faq) return _slide(const FaqScreen());
+    if (name == privacyPolicy) return _slide(const PrivacyPolicyScreen());
     if (name == notifications) return _slide(const NotificationsScreen());
 
     if (name == provider) return _fade(const ProviderShell());

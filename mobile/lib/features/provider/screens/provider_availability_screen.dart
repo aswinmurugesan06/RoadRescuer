@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../routes/app_routes.dart';
 import '../../../services/location_service.dart';
 import '../../../services/provider_service.dart';
 import '../../../widgets/rr_button.dart';
@@ -368,6 +369,33 @@ class _ProviderAvailabilityScreenState extends State<ProviderAvailabilityScreen>
                 isLoading: _isSaving,
                 onPressed: _saveSettings,
               ),
+              const SizedBox(height: 24),
+
+              // Help & Legal
+              const SectionHeader(title: 'Help & Legal'),
+              const SizedBox(height: 12),
+              RRCard(
+                child: Column(
+                  children: [
+                    _buildHelpTile(
+                      icon: Icons.help_outline_rounded,
+                      title: 'Help & FAQ',
+                      onTap: () =>
+                          Navigator.pushNamed(context, AppRoutes.faq),
+                    ),
+                    const Divider(),
+                    _buildHelpTile(
+                      icon: Icons.privacy_tip_outlined,
+                      title: 'Privacy Policy & Terms',
+                      onTap: () => Navigator.pushNamed(
+                        context,
+                        AppRoutes.privacyPolicy,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
             ],
           ),
         ),
@@ -375,8 +403,43 @@ class _ProviderAvailabilityScreenState extends State<ProviderAvailabilityScreen>
     );
   }
 
-  Widget _buildSwitchTile(String title, bool val, ValueChanged<bool> onChanged) {
-    return Padding(
+  Widget _buildHelpTile({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Row(
+          children: [
+            Icon(icon, size: 21, color: AppColors.primary),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            const Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 14,
+              color: Colors.grey,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSwitchTile(String title, bool val, ValueChanged<bool> onChanged) {    return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [

@@ -294,13 +294,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _buildSettingsTile(
                       icon: Icons.help_outline_rounded,
                       title: 'Help & FAQ',
-                      onTap: () {},
+                      subtitle: 'Answers to common questions',
+                      onTap: () => Navigator.pushNamed(context, AppRoutes.faq),
                     ),
                     const Divider(),
                     _buildSettingsTile(
                       icon: Icons.privacy_tip_outlined,
                       title: 'Privacy Policy & Terms',
-                      onTap: () {},
+                      subtitle: 'How we handle your data',
+                      onTap: () => Navigator.pushNamed(
+                        context,
+                        AppRoutes.privacyPolicy,
+                      ),
                     ),
                   ],
                 ),
