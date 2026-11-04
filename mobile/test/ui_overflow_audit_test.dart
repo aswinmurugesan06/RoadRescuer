@@ -13,6 +13,7 @@ import 'package:road_rescue/features/assistance/screens/request_assistance_scree
 import 'package:road_rescue/features/assistance/screens/active_assistance_screen.dart';
 import 'package:road_rescue/features/auth/screens/register_screen.dart';
 import 'package:road_rescue/features/auth/screens/forgot_password_screen.dart';
+import 'package:road_rescue/features/auth/screens/role_selector_screen.dart';
 import 'package:road_rescue/features/customer/screens/customer_home_screen.dart';
 import 'package:road_rescue/features/provider/screens/provider_home_screen.dart';
 import 'package:road_rescue/features/assistance/screens/service_verification_pin_screen.dart';
@@ -68,6 +69,11 @@ ServiceRequestModel _aiRequest() => _request().copyWith(
       estimatedPartsCost: 1800,
       mechanicPrepNote:
           'Bring a matching 17-inch tyre and a portable inflator before departing.',
+    );
+
+ServiceRequestModel _searchingRequest() => _request().copyWith(
+      status: RequestStatus.searching,
+      providerName: 'Assigning...',
     );
 
 void main() {
@@ -221,6 +227,23 @@ void main() {
         tester,
         const RegisterScreen(initialRole: 'customer'),
       );
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('role selector has no overflow at $label', (tester) async {
+      await setSize(tester, size);
+      await pumpScreen(tester, const RoleSelectorScreen());
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('customer broadcasting banner has no overflow at $label',
+        (tester) async {
+      await setSize(tester, size);
+      await pumpScreen(
+        tester,
+        ActiveAssistanceScreen(request: _searchingRequest()),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
       expect(tester.takeException(), isNull);
     });
 

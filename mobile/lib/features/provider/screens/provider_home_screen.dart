@@ -1223,39 +1223,71 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen>
 
   Widget _buildEmptyQueue(bool isDark) {
     return GlassCard(
-      padding: const EdgeInsets.all(18),
-      child: Column(
-        children: [
-          const GlassIconBox(
-            icon: Icons.radar_rounded,
-            size: 46,
-            iconSize: 23,
-            color: AppColors.tertiary,
-          ),
-          const SizedBox(height: 9),
-          Text(
-            _isOnline ? 'No requests in your area yet' : 'Go online to receive jobs',
-            style: TextStyle(
-              fontFamily: 'Plus Jakarta Sans',
-              fontSize: 13,
-              fontWeight: FontWeight.w800,
-              color: isDark ? Colors.white : AppColors.textPrimaryLight,
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 22),
+      child: SizedBox(
+        width: double.infinity,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const GlassIconBox(
+              icon: Icons.radar_rounded,
+              size: 46,
+              iconSize: 23,
+              color: AppColors.tertiary,
             ),
-          ),
-          const SizedBox(height: 3),
-          Text(
-            _isOnline
-                ? 'New dispatches will appear here in real time.'
-                : 'Toggle your status above to start receiving nearby requests.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 10.5,
-              color: isDark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondaryLight,
+            const SizedBox(height: 10),
+            Text(
+              _isOnline
+                  ? 'No requests in your area yet'
+                  : 'Go online to receive jobs',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Plus Jakarta Sans',
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: isDark ? Colors.white : AppColors.textPrimaryLight,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 5),
+            Text(
+              _isOnline
+                  ? 'New dispatches will appear here in real time.'
+                  : 'Toggle your status above to start receiving nearby requests.',
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 10.5,
+                height: 1.35,
+                color: isDark
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondaryLight,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: (_isOnline ? AppColors.success : AppColors.offline)
+                    .withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                _isOnline ? 'LISTENING FOR DISPATCHES' : 'YOU ARE OFFLINE',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 8,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.5,
+                  color: _isOnline ? AppColors.success : AppColors.offline,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

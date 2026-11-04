@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import '../../../routes/app_routes.dart';
+
 import '../../../core/theme/app_colors.dart';
+import '../../../routes/app_routes.dart';
 import '../../../services/auth_service.dart';
 import '../../../widgets/app_logo.dart';
+import '../../../widgets/glass.dart';
 
 class RoleSelectorScreen extends StatefulWidget {
   const RoleSelectorScreen({super.key});
@@ -26,9 +28,17 @@ class _RoleSelectorScreenState extends State<RoleSelectorScreen> {
 
     if (isLoggedIn && currentRole?.toUpperCase() == role.toUpperCase()) {
       if (role == 'CUSTOMER') {
-        Navigator.pushNamedAndRemoveUntil(context, AppRoutes.customer, (r) => false);
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          AppRoutes.customer,
+          (r) => false,
+        );
       } else if (role == 'PROVIDER') {
-        Navigator.pushNamedAndRemoveUntil(context, AppRoutes.provider, (r) => false);
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          AppRoutes.provider,
+          (r) => false,
+        );
       }
     } else {
       Navigator.pushNamed(context, AppRoutes.login, arguments: {'role': role});
@@ -38,107 +48,126 @@ class _RoleSelectorScreenState extends State<RoleSelectorScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A), // Dark navy background
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: const BackButton(
-          color: Colors.white,
-        ),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Official RoadRescue Brand Logo
-              const Center(
-                child: AppLogo.authHeader(
-                  height: 52,
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Screen Title & Subtitle
-              const Text(
-                'Welcome Back 👋',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.5,
-                  color: Colors.white,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Choose your account type to continue',
-                style: TextStyle(
-                  fontSize: 15,
-                  color: Color(0xFF94A3B8),
-                  fontWeight: FontWeight.w500,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 28),
-
-              // CARD 1 — VEHICLE USER
-              _RoleCard(
-                icon: Icons.local_shipping_rounded,
-                title: 'Vehicle User',
-                subtitle: 'Need roadside assistance?',
-                description: 'Request mechanics, tyre service, fuel, battery help or towing.',
-                accentColor: AppColors.primary,
-                onTap: () => _handleRoleSelect('CUSTOMER'),
-              ),
-              const SizedBox(height: 16),
-
-              // CARD 2 — SERVICE PROVIDER
-              _RoleCard(
-                icon: Icons.build_rounded,
-                title: 'Service Provider',
-                subtitle: 'Provide roadside assistance',
-                description: 'Receive requests, manage availability and track your earnings.',
-                accentColor: const Color(0xFF2563EB),
-                onTap: () => _handleRoleSelect('PROVIDER'),
-              ),
-              const SizedBox(height: 28),
-
-              // Trust & Security badge
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1E293B).withValues(alpha: 0.6),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.08),
+      backgroundColor: AppColors.backgroundLight,
+      body: GlassBackground(
+        child: SafeArea(
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: EdgeInsets.fromLTRB(
+              20,
+              4,
+              20,
+              MediaQuery.of(context).viewInsets.bottom + 28,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: IconButton(
+                    onPressed: () => Navigator.maybePop(context),
+                    icon: const Icon(
+                      Icons.arrow_back_rounded,
+                      color: AppColors.textPrimaryLight,
+                    ),
                   ),
                 ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.security_rounded,
-                      size: 18,
-                      color: Color(0xFF94A3B8),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Secure unified access powered by RoadRescue Engine',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade400,
-                          fontWeight: FontWeight.w500,
+                const Center(
+                  child: AppLogo.authHeader(height: 52),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Welcome Back 👋',
+                  style: TextStyle(
+                    fontFamily: 'Plus Jakarta Sans',
+                    fontSize: 27,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.5,
+                    color: AppColors.textPrimaryLight,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Choose your account type to continue',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textSecondaryLight,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 26),
+                _RoleCard(
+                  icon: Icons.local_shipping_rounded,
+                  title: 'Vehicle User',
+                  subtitle: 'Need roadside assistance?',
+                  description:
+                      'Request mechanics, tyre service, fuel, battery help or towing.',
+                  accentColor: AppColors.primary,
+                  onTap: () => _handleRoleSelect('CUSTOMER'),
+                ),
+                const SizedBox(height: 14),
+                _RoleCard(
+                  icon: Icons.build_rounded,
+                  title: 'Service Provider',
+                  subtitle: 'Provide roadside assistance',
+                  description:
+                      'Receive requests, manage availability and track your earnings.',
+                  accentColor: const Color(0xFF2563EB),
+                  onTap: () => _handleRoleSelect('PROVIDER'),
+                ),
+                const SizedBox(height: 24),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.72),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.white),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(
+                        Icons.security_rounded,
+                        size: 18,
+                        color: AppColors.primary,
+                      ),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Secure unified access powered by RoadRescue Engine',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            height: 1.35,
+                            color: AppColors.textSecondaryLight,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 20),
-            ],
+                const SizedBox(height: 16),
+                const Text(
+                  'RoadRescue • 24/7 roadside assistance',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: AppColors.textHintLight,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -166,22 +195,29 @@ class _RoleCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: const Color(0xFF1E293B),
+      color: Colors.white.withValues(alpha: 0.86),
       borderRadius: BorderRadius.circular(18),
       elevation: 0,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(18),
-        splashColor: accentColor.withValues(alpha: 0.12),
-        highlightColor: accentColor.withValues(alpha: 0.06),
+        splashColor: accentColor.withValues(alpha: 0.08),
+        highlightColor: accentColor.withValues(alpha: 0.04),
         child: Container(
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.all(17),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: accentColor.withValues(alpha: 0.35),
+              color: accentColor.withValues(alpha: 0.28),
               width: 1.2,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF0F172A).withValues(alpha: 0.05),
+                blurRadius: 22,
+                offset: const Offset(0, 9),
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -189,43 +225,42 @@ class _RoleCard extends StatelessWidget {
               Row(
                 children: [
                   Container(
-                    width: 48,
-                    height: 48,
+                    width: 46,
+                    height: 46,
                     decoration: BoxDecoration(
-                      color: accentColor.withValues(alpha: 0.14),
-                      borderRadius: BorderRadius.circular(14),
+                      color: accentColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(13),
                       border: Border.all(
-                        color: accentColor.withValues(alpha: 0.25),
-                        width: 1,
+                        color: accentColor.withValues(alpha: 0.22),
                       ),
                     ),
-                    child: Icon(
-                      icon,
-                      color: accentColor,
-                      size: 24,
-                    ),
+                    child: Icon(icon, color: accentColor, size: 23),
                   ),
-                  const SizedBox(width: 14),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                            letterSpacing: -0.3,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimaryLight,
+                            letterSpacing: -0.2,
                           ),
                         ),
-                        const SizedBox(height: 3),
+                        const SizedBox(height: 2),
                         Text(
                           subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 12,
                             color: accentColor,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ],
@@ -233,14 +268,13 @@ class _RoleCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Container(
-                    width: 34,
-                    height: 34,
+                    width: 33,
+                    height: 33,
                     decoration: BoxDecoration(
-                      color: accentColor.withValues(alpha: 0.15),
+                      color: accentColor.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: accentColor.withValues(alpha: 0.3),
-                        width: 1,
+                        color: accentColor.withValues(alpha: 0.22),
                       ),
                     ),
                     child: Icon(
@@ -251,12 +285,14 @@ class _RoleCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 11),
               Text(
                 description,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  fontSize: 13,
-                  color: Color(0xFF94A3B8),
+                  fontSize: 12,
+                  color: AppColors.textSecondaryLight,
                   height: 1.4,
                   fontWeight: FontWeight.w400,
                 ),
