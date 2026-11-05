@@ -124,6 +124,15 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
     _aiVersion++;
   }
 
+  void _handleInvalidAiImage() {
+    setState(() {
+      _aiAssessment = null;
+      _laborHours = CostEstimationService.autoLaborHours(_issueCategory);
+      _partsEstimate = 0;
+      _partsController.clear();
+    });
+  }
+
   void _requestService() {
     final assessment = _aiAssessment;
     final adjustedAssessment = assessment?.copyWith(
@@ -174,6 +183,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
                   selectedCategory: _issueCategory,
                   estimate: estimate,
                   onAssessment: _applyAiAssessment,
+                  onInvalidImage: _handleInvalidAiImage,
                 ),
                 const SizedBox(height: 14),
                 _buildInputs(isDark),

@@ -136,6 +136,68 @@ void main() {
     expect(AiDamageService.extractSecureUrl('not-json'), isEmpty);
   });
 
+  test('non-vehicle image is rejected with a clear warning', () {
+    final result = AiDamageResult.fromJson({
+      'isVehicleImage': false,
+      'invalidReason': 'A person is visible, not a vehicle or vehicle part.',
+    });
+
+    expect(result.isVehicleImage, isFalse);
+    expect(result.damageTitle, 'Not a valid vehicle image');
+    expect(result.detectedType, 'Not a vehicle');
+    expect(result.visibleIndicators, isEmpty);
+    expect(result.requiredTools, isEmpty);
+    expect(result.recommendedParts, isEmpty);
+    expect(result.estimatedLaborHours, 0);
+    expect(result.estimatedPartsCost, 0);
+    expect(result.invalidReason, contains('person'));
+    expect(result.toRequestFields(), isEmpty);
+  });
+
+  test('Gemini response can reject a non-vehicle image', () {
+    final body = jsonEncode({
+      'candidates': [
+        {
+          'content': {
+            'parts': [
+              {
+                'text': '''
+{
+  "isVehicleImage": false,
+  "invalidReason": "The image shows a plate of food, not a vehicle.",
+  "damageTitle": "",
+  "detectedType": "",
+  "mappedCategory": "Mechanic",
+  "severity": "Low",
+  "visibleIndicators": [],
+  "requiredTools": [],
+  "recommendedParts": [],
+  "estimatedLaborHours": 0,
+  "estimatedPartsCost": 0,
+  "mechanicPrepNote": ""
+}
+''',
+              },
+            ],
+          },
+        },
+      ],
+    });
+
+    final result = AiDamageService.parseGeminiBody(body);
+    expect(result.isVehicleImage, isFalse);
+    expect(result.invalidReason, contains('food'));
+    expect(result.requiredTools, isEmpty);
+  });
+
+  test('string boolean false is treated as invalid', () {
+    final result = AiDamageResult.fromJson({
+      'isVehicleImage': 'false',
+      'invalidReason': 'No vehicle is visible.',
+    });
+    expect(result.isVehicleImage, isFalse);
+  });
+
   test('AI result feeds the existing cost formula exactly', () {
     final result = AiDamageResult.fromJson({
       'damageTitle': 'Battery terminal corrosion',

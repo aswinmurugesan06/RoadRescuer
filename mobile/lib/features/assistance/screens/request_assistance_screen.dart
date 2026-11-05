@@ -123,6 +123,12 @@ class _RequestAssistanceScreenState extends State<RequestAssistanceScreen> {
     });
   }
 
+  void _handleInvalidAiImage() {
+    setState(() {
+      _aiAssessment = null;
+    });
+  }
+
   CostEstimate get _estimate {
     final assessment = _aiAssessment;
     return CostEstimationService.estimate(
@@ -302,6 +308,7 @@ class _RequestAssistanceScreenState extends State<RequestAssistanceScreen> {
                       selectedCategory: _selectedService,
                       estimate: _estimate,
                       onAssessment: _applyAiAssessment,
+                      onInvalidImage: _handleInvalidAiImage,
                     ),
                     const SizedBox(height: 24),
 

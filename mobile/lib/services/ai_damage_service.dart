@@ -19,6 +19,12 @@ class AiDamageResult {
   final double estimatedPartsCost;
   final String mechanicPrepNote;
 
+  /// False when Gemini says the uploaded image is not a vehicle/vehicle part.
+  final bool isVehicleImage;
+
+  /// Human-readable reason when [isVehicleImage] is false.
+  final String? invalidReason;
+
   /// True when the result came from the deterministic offline fallback.
   final bool isFallback;
 
@@ -33,13 +39,47 @@ class AiDamageResult {
     required this.estimatedLaborHours,
     required this.estimatedPartsCost,
     required this.mechanicPrepNote,
+    this.isVehicleImage = true,
+    this.invalidReason,
     this.isFallback = false,
   });
+
+  factory AiDamageResult.invalid({String? reason}) {
+    final cleanReason = (reason ?? '').trim();
+    return AiDamageResult(
+      damageTitle: 'Not a valid vehicle image',
+      detectedType: 'Not a vehicle',
+      mappedCategory: 'Mechanic',
+      severity: 'Low',
+      visibleIndicators: const [],
+      requiredTools: const [],
+      recommendedParts: const [],
+      estimatedLaborHours: 0,
+      estimatedPartsCost: 0,
+      mechanicPrepNote: cleanReason.isEmpty
+          ? 'Please upload a clear photo of the vehicle or the damaged part.'
+          : cleanReason,
+      isVehicleImage: false,
+      invalidReason: cleanReason.isEmpty
+          ? 'No vehicle or vehicle part is visible in this photo.'
+          : cleanReason,
+    );
+  }
 
   factory AiDamageResult.fromJson(
     Map<String, dynamic> json, {
     bool isFallback = false,
   }) {
+    final isVehicleImage = AiDamageService._asBool(
+      json['isVehicleImage'],
+      defaultValue: true,
+    );
+    if (!isVehicleImage) {
+      return AiDamageResult.invalid(
+        reason: json['invalidReason']?.toString(),
+      );
+    }
+
     final mappedCategory = AiDamageService._normalizeCategory(
       json['mappedCategory']?.toString(),
     );
@@ -103,6 +143,8 @@ class AiDamageResult {
     double? estimatedLaborHours,
     double? estimatedPartsCost,
     String? mechanicPrepNote,
+    bool? isVehicleImage,
+    String? invalidReason,
     bool? isFallback,
   }) {
     return AiDamageResult(
@@ -116,12 +158,15 @@ class AiDamageResult {
       estimatedLaborHours: estimatedLaborHours ?? this.estimatedLaborHours,
       estimatedPartsCost: estimatedPartsCost ?? this.estimatedPartsCost,
       mechanicPrepNote: mechanicPrepNote ?? this.mechanicPrepNote,
+      isVehicleImage: isVehicleImage ?? this.isVehicleImage,
+      invalidReason: invalidReason ?? this.invalidReason,
       isFallback: isFallback ?? this.isFallback,
     );
   }
 
   /// Firestore payload for the `serviceRequests` document.
   Map<String, dynamic> toRequestFields() {
+    if (!isVehicleImage) return const {};
     return {
       'aiDetectedIssue': damageTitle,
       'aiSeverity': severity,
@@ -474,8 +519,17 @@ class AiDamageService {
   static String _buildPrompt(String vehicleType) {
     return '''
 You are RoadRescue's vehicle damage vision assistant.
-Analyze the uploaded image of a $vehicleType for visible roadside damage.
-Classify the visible damage into exactly one of these four target areas:
+First decide whether the uploaded image clearly shows a vehicle (car, bike,
+auto-rickshaw, van, bus, truck or commercial vehicle) or a visible vehicle
+component such as a tyre, lamp, body panel, battery or engine part.
+
+If the image shows a person, animal, document, screenshot, food, landscape,
+indoor scene, text, logo, or an unrelated object, it is NOT a valid vehicle
+image. Do not invent damage. Set "isVehicleImage" to false, explain why in
+"invalidReason", and leave the damage fields empty or zero.
+
+If it is a valid vehicle or vehicle-part image, analyse the visible damage for
+a $vehicleType and classify it into exactly one of these four target areas:
 - Flat tire
 - Broken light
 - Body damage
@@ -483,6 +537,8 @@ Classify the visible damage into exactly one of these four target areas:
 
 Return ONLY one valid JSON object (no markdown, no explanation) with this exact structure:
 {
+  "isVehicleImage": true,
+  "invalidReason": "",
   "damageTitle": "Short clear title of the visible issue",
   "detectedType": "Flat tire | Broken light | Body damage | Battery issue",
   "mappedCategory": "Puncture | Mechanic | Tow | Battery | Fuel",
@@ -494,6 +550,23 @@ Return ONLY one valid JSON object (no markdown, no explanation) with this exact 
   "estimatedPartsCost": 250,
   "mechanicPrepNote": "Concise preparation instruction for the mechanic"
 }
+
+For an invalid image return this shape instead:
+{
+  "isVehicleImage": false,
+  "invalidReason": "No vehicle or vehicle part is visible in this photo",
+  "damageTitle": "",
+  "detectedType": "",
+  "mappedCategory": "Mechanic",
+  "severity": "Low",
+  "visibleIndicators": [],
+  "requiredTools": [],
+  "recommendedParts": [],
+  "estimatedLaborHours": 0,
+  "estimatedPartsCost": 0,
+  "mechanicPrepNote": ""
+}
+
 Use Indian rupee amounts for estimatedPartsCost. Be conservative with severity and only report what is visible.
 ''';
   }
@@ -579,6 +652,14 @@ Use Indian rupee amounts for estimatedPartsCost. Be conservative with severity a
         : double.tryParse(value?.toString() ?? '');
     if (parsed == null || parsed.isNaN || parsed.isInfinite) return fallback;
     return parsed.clamp(min, max).toDouble();
+  }
+
+  static bool _asBool(dynamic value, {required bool defaultValue}) {
+    if (value is bool) return value;
+    final text = value?.toString().trim().toLowerCase();
+    if (text == 'true') return true;
+    if (text == 'false') return false;
+    return defaultValue;
   }
 
   static String _normalizeCategory(String? raw) {

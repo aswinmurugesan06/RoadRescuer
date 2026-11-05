@@ -16,6 +16,7 @@ class AiDamageAssessmentCard extends StatefulWidget {
   final String vehicleType;
   final String? selectedCategory;
   final ValueChanged<AiDamageAssessment>? onAssessment;
+  final VoidCallback? onInvalidImage;
   final CostEstimate? estimate;
 
   const AiDamageAssessmentCard({
@@ -23,6 +24,7 @@ class AiDamageAssessmentCard extends StatefulWidget {
     required this.vehicleType,
     this.selectedCategory,
     this.onAssessment,
+    this.onInvalidImage,
     this.estimate,
   });
 
@@ -70,7 +72,11 @@ class _AiDamageAssessmentCardState extends State<AiDamageAssessmentCard> {
         _assessment = assessment;
         _isAnalyzing = false;
       });
-      widget.onAssessment?.call(assessment);
+      if (assessment.result.isVehicleImage) {
+        widget.onAssessment?.call(assessment);
+      } else {
+        widget.onInvalidImage?.call();
+      }
     } catch (_) {
       if (!mounted) return;
       setState(() {
@@ -269,7 +275,67 @@ class _AiDamageAssessmentCardState extends State<AiDamageAssessmentCard> {
               ],
             ),
           ],
-          if (result != null) ...[
+          if (result != null && !result.isVehicleImage) ...[
+            const SizedBox(height: 14),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.danger.withValues(alpha: 0.07),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppColors.danger.withValues(alpha: 0.22),
+                ),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(
+                    Icons.image_not_supported_rounded,
+                    size: 18,
+                    color: AppColors.danger,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Not a valid vehicle image',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.danger,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          result.invalidReason ??
+                              'Please upload a clear photo of the vehicle or the damaged part.',
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 9.5,
+                            height: 1.35,
+                            color: AppColors.textSecondaryLight,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Take or upload another photo to run a valid assessment.',
+                          style: TextStyle(
+                            fontSize: 8.5,
+                            color: AppColors.textHintLight,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          if (result != null && result.isVehicleImage) ...[
             const SizedBox(height: 14),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -361,7 +427,8 @@ class _AiDamageAssessmentCardState extends State<AiDamageAssessmentCard> {
               ),
             ],
           ],
-          if (widget.estimate != null) ...[
+          if (widget.estimate != null &&
+              (result == null || result.isVehicleImage)) ...[
             const SizedBox(height: 12),
             _estimateSummary(widget.estimate!),
           ],
