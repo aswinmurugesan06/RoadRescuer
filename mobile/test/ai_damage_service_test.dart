@@ -62,7 +62,8 @@ void main() {
     expect(second.estimatedPartsCost, first.estimatedPartsCost);
   });
 
-  test('assess falls back to the smart mock without credentials', () async {
+  test('assess returns unavailable instead of inventing damage without keys',
+      () async {
     if (AiDamageService.hasGemini || AiDamageService.hasCloudinary) {
       // A developer is running with live dart-defines; the offline path is
       // covered by the deterministic mock test above.
@@ -77,11 +78,21 @@ void main() {
     );
 
     expect(assessment.imageUrl, startsWith('data:image/'));
-    expect(assessment.result.isFallback, isTrue);
-    expect(assessment.result.damageTitle, isNotEmpty);
-    expect(assessment.result.detectedType, 'Battery issue');
-    expect(assessment.result.mappedCategory, 'Battery');
-    expect(assessment.result.requiredTools.length, greaterThanOrEqualTo(3));
+    expect(assessment.result.isAnalysisUnavailable, isTrue);
+    expect(assessment.result.isVehicleImage, isFalse);
+    expect(assessment.result.requiredTools, isEmpty);
+    expect(assessment.result.recommendedParts, isEmpty);
+    expect(assessment.result.estimatedLaborHours, 0);
+    expect(assessment.result.estimatedPartsCost, 0);
+  });
+
+  test('unavailable result never maps to Firestore AI fields', () {
+    final result = AiDamageResult.unavailable(
+      reason: 'AI analysis timed out.',
+    );
+    expect(result.isAnalysisUnavailable, isTrue);
+    expect(result.isVehicleImage, isFalse);
+    expect(result.toRequestFields(), isEmpty);
   });
 
   test('Gemini body parsing handles fenced JSON and exact fields', () {

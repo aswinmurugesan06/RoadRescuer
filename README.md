@@ -76,10 +76,19 @@ the photo from another session or device. `DamagePhotoView` renders both `http`
 and `data:image` values.
 
 If `GEMINI_API_KEY` is missing, quota is exceeded, the device is offline, or a
-model call fails, a deterministic category-aware mock keeps the flow working.
-The model chain is `gemini-2.5-flash` → `gemini-2.0-flash` → `gemini-1.5-flash`
-→ `gemini-3.5-flash` → `gemini-3.8-flash`; responses are sanitised before JSON
-decoding and every call has a 12-second timeout.
+model call fails, the app returns an **“AI could not verify this image”**
+result instead of inventing damage. The deterministic mock remains available
+for unit tests and offline demo helpers but is not used as a live assessment.
+
+Gemini first validates that the photo actually contains a vehicle or vehicle
+part. Selfies, people, animals, documents, screenshots, food, landscapes and
+unrelated objects are rejected with a clear **“Not a valid vehicle image”**
+message, and no cost is auto-filled.
+
+The model chain starts with the configured model (`gemini-3.5-flash` in the
+local demo config), then falls back to `gemini-3.8-flash`; older 2.0/1.5 models
+are retired for new keys. Responses are sanitised before JSON decoding and every
+call has a 25-second timeout.
 
 Provide the credentials at build/run time (never commit them):
 

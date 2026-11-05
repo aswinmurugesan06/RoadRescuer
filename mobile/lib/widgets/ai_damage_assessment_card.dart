@@ -275,7 +275,69 @@ class _AiDamageAssessmentCardState extends State<AiDamageAssessmentCard> {
               ],
             ),
           ],
-          if (result != null && !result.isVehicleImage) ...[
+          if (result != null && result.isAnalysisUnavailable) ...[
+            const SizedBox(height: 14),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.warning.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppColors.warning.withValues(alpha: 0.24),
+                ),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(
+                    Icons.cloud_off_rounded,
+                    size: 18,
+                    color: AppColors.warning,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Could not verify this image',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.warning,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          result.invalidReason ??
+                              'Check your connection and try again with a clear vehicle photo.',
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 9.5,
+                            height: 1.35,
+                            color: AppColors.textSecondaryLight,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'No damage estimate was applied.',
+                          style: TextStyle(
+                            fontSize: 8.5,
+                            color: AppColors.textHintLight,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          if (result != null &&
+              !result.isAnalysisUnavailable &&
+              !result.isVehicleImage) ...[
             const SizedBox(height: 14),
             Container(
               width: double.infinity,

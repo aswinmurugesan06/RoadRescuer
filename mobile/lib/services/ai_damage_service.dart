@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
@@ -25,6 +24,10 @@ class AiDamageResult {
   /// Human-readable reason when [isVehicleImage] is false.
   final String? invalidReason;
 
+  /// True when the AI could not be reached or returned an unusable response.
+  /// In this state no damage is invented and no cost is auto-filled.
+  final bool isAnalysisUnavailable;
+
   /// True when the result came from the deterministic offline fallback.
   final bool isFallback;
 
@@ -41,6 +44,7 @@ class AiDamageResult {
     required this.mechanicPrepNote,
     this.isVehicleImage = true,
     this.invalidReason,
+    this.isAnalysisUnavailable = false,
     this.isFallback = false,
   });
 
@@ -63,6 +67,29 @@ class AiDamageResult {
       invalidReason: cleanReason.isEmpty
           ? 'No vehicle or vehicle part is visible in this photo.'
           : cleanReason,
+    );
+  }
+
+  factory AiDamageResult.unavailable({String? reason}) {
+    final cleanReason = (reason ?? '').trim();
+    return AiDamageResult(
+      damageTitle: 'Could not verify this image',
+      detectedType: 'Analysis unavailable',
+      mappedCategory: 'Mechanic',
+      severity: 'Low',
+      visibleIndicators: const [],
+      requiredTools: const [],
+      recommendedParts: const [],
+      estimatedLaborHours: 0,
+      estimatedPartsCost: 0,
+      mechanicPrepNote: cleanReason.isEmpty
+          ? 'Check your connection and try again with a clear vehicle photo.'
+          : cleanReason,
+      isVehicleImage: false,
+      invalidReason: cleanReason.isEmpty
+          ? 'The AI service could not analyse this photo.'
+          : cleanReason,
+      isAnalysisUnavailable: true,
     );
   }
 
@@ -145,6 +172,7 @@ class AiDamageResult {
     String? mechanicPrepNote,
     bool? isVehicleImage,
     String? invalidReason,
+    bool? isAnalysisUnavailable,
     bool? isFallback,
   }) {
     return AiDamageResult(
@@ -160,6 +188,8 @@ class AiDamageResult {
       mechanicPrepNote: mechanicPrepNote ?? this.mechanicPrepNote,
       isVehicleImage: isVehicleImage ?? this.isVehicleImage,
       invalidReason: invalidReason ?? this.invalidReason,
+      isAnalysisUnavailable:
+          isAnalysisUnavailable ?? this.isAnalysisUnavailable,
       isFallback: isFallback ?? this.isFallback,
     );
   }
@@ -248,9 +278,8 @@ class AiDamageService {
   }) async {
     if (imageBytes.isEmpty) {
       return AiDamageAssessment(
-        result: mockResult(
-          vehicleType: vehicleType,
-          fallbackCategory: fallbackCategory,
+        result: AiDamageResult.unavailable(
+          reason: 'Please select a clear vehicle photo first.',
         ),
       );
     }
@@ -272,9 +301,9 @@ class AiDamageService {
       );
     } catch (_) {
       return AiDamageAssessment(
-        result: mockResult(
-          vehicleType: vehicleType,
-          fallbackCategory: fallbackCategory,
+        result: AiDamageResult.unavailable(
+          reason:
+              'The AI service could not analyse this photo. Check your connection and try again.',
         ),
         imageUrl: _dataUrl(imageBytes),
       );
@@ -324,10 +353,10 @@ class AiDamageService {
     String? fallbackCategory,
   }) async {
     if (!hasGemini || imageBytes.isEmpty) {
-      return mockResult(
-        vehicleType: vehicleType,
-        seed: _seedFor(imageBytes),
-        fallbackCategory: fallbackCategory,
+      return AiDamageResult.unavailable(
+        reason: hasGemini
+            ? 'Please select a clear vehicle photo first.'
+            : 'AI vision is not configured. Add GEMINI_API_KEY to enable vehicle validation.',
       );
     }
 
@@ -363,7 +392,7 @@ class AiDamageService {
               headers: {'Content-Type': 'application/json'},
               body: body,
             )
-            .timeout(const Duration(seconds: 12));
+            .timeout(const Duration(seconds: 25));
 
         if (response.statusCode == 200) {
           return parseGeminiBody(response.body);
@@ -375,20 +404,18 @@ class AiDamageService {
             response.statusCode == 429) {
           continue;
         }
-        return mockResult(
-          vehicleType: vehicleType,
-          seed: _seedFor(imageBytes),
-          fallbackCategory: fallbackCategory,
+        return AiDamageResult.unavailable(
+          reason:
+              'The AI service returned an error. Please try again in a moment.',
         );
       } catch (_) {
-        // Try the next model, then fall back to the local assessment.
+        // Try the next model, then return an unavailable result.
       }
     }
 
-    return mockResult(
-      vehicleType: vehicleType,
-      seed: _seedFor(imageBytes),
-      fallbackCategory: fallbackCategory,
+    return AiDamageResult.unavailable(
+      reason:
+          'AI analysis timed out or is temporarily unavailable. Please upload the photo again.',
     );
   }
 
@@ -507,10 +534,10 @@ class AiDamageService {
     final configured = geminiModel.trim().isEmpty
         ? 'gemini-2.5-flash'
         : geminiModel.trim();
+    // 2.0/1.5 are retired for new keys; keep only models that can actually
+    // validate an image today, with the configured model first.
     return <String>{
       configured,
-      'gemini-2.0-flash',
-      'gemini-1.5-flash',
       'gemini-3.5-flash',
       'gemini-3.8-flash',
     }.toList(growable: false);
@@ -599,16 +626,6 @@ Use Indian rupee amounts for estimatedPartsCost. Be conservative with severity a
       return 'image/webp';
     }
     return 'image/jpeg';
-  }
-
-  static int _seedFor(Uint8List bytes) {
-    if (bytes.isEmpty) return 0;
-    var seed = bytes.length;
-    final step = math.max(1, bytes.length ~/ 64).toInt();
-    for (var i = 0; i < bytes.length; i += step) {
-      seed = (seed * 31 + bytes[i]) & 0x7fffffff;
-    }
-    return seed;
   }
 
   static String _extractJsonObject(String text) {
