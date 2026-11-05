@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'core/theme/app_theme.dart';
 import 'core/navigation/route_observer.dart';
 import 'routes/app_routes.dart';
+import 'services/ai_damage_service.dart';
 import 'services/firebase/firebase_bootstrap.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await _initializeFirebase();
+  await AiDamageService.initializeRuntimeConfig();
+  debugPrint('AI vision configured: ${AiDamageService.hasGemini}');
   runApp(const RoadRescueApp());
 }
 

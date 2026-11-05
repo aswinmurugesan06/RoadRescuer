@@ -108,6 +108,11 @@ Required keys in the local `firebase_test_config.json`:
 }
 ```
 
+For builds that are not started with `--dart-define-from-file`, the app also
+loads `mobile/assets/config/ai_config.json` at startup. Create it from
+`assets/config/ai_config.example.json`; the real file is gitignored. This is the
+recommended setup for Android/iOS builds and for the local web demo.
+
 The customer sees the damage photo, detected issue, severity, visible
 indicators and updated estimate. The provider sees the same report with
 required tools, recommended spare parts and the prep note on the incoming

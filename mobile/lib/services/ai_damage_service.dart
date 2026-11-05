@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:http/http.dart' as http;
 
 /// One AI vision assessment for a vehicle photo.
@@ -264,11 +265,60 @@ class AiDamageService {
     defaultValue: '',
   );
 
-  static bool get hasGemini => geminiApiKey.trim().isNotEmpty;
+  static String _runtimeGeminiKey = '';
+  static String _runtimeGeminiModel = '';
+  static String _runtimeCloudName = '';
+  static String _runtimeCloudPreset = '';
+  static Future<void>? _runtimeConfigFuture;
+
+  static String get activeGeminiKey => _runtimeGeminiKey.isNotEmpty
+      ? _runtimeGeminiKey
+      : geminiApiKey.trim();
+
+  static String get activeGeminiModel => _runtimeGeminiModel.isNotEmpty
+      ? _runtimeGeminiModel
+      : geminiModel.trim();
+
+  static String get activeCloudName => _runtimeCloudName.isNotEmpty
+      ? _runtimeCloudName
+      : cloudinaryCloudName.trim();
+
+  static String get activeCloudPreset => _runtimeCloudPreset.isNotEmpty
+      ? _runtimeCloudPreset
+      : cloudinaryUploadPreset.trim();
+
+  static bool get hasGemini => activeGeminiKey.isNotEmpty;
 
   static bool get hasCloudinary =>
-      cloudinaryCloudName.trim().isNotEmpty &&
-      cloudinaryUploadPreset.trim().isNotEmpty;
+      activeCloudName.isNotEmpty && activeCloudPreset.isNotEmpty;
+
+  /// Loads `assets/config/ai_config.json` when present.
+  ///
+  /// This lets the demo run without requiring `--dart-define` on every build.
+  /// Compile-time dart-defines remain the fallback.
+  static Future<void> initializeRuntimeConfig() {
+    return _runtimeConfigFuture ??= _loadRuntimeConfig();
+  }
+
+  static Future<void> _loadRuntimeConfig() async {
+    try {
+      final raw = await rootBundle
+          .loadString('assets/config/ai_config.json');
+      final decoded = jsonDecode(raw);
+      if (decoded is Map) {
+        _runtimeGeminiKey =
+            (decoded['GEMINI_API_KEY'] as String? ?? '').trim();
+        _runtimeGeminiModel =
+            (decoded['GEMINI_MODEL'] as String? ?? '').trim();
+        _runtimeCloudName =
+            (decoded['CLOUDINARY_CLOUD_NAME'] as String? ?? '').trim();
+        _runtimeCloudPreset =
+            (decoded['CLOUDINARY_UPLOAD_PRESET'] as String? ?? '').trim();
+      }
+    } catch (_) {
+      // Missing or empty local config: dart-defines still work.
+    }
+  }
 
   /// Uploads the photo and analyses it at the same time.
   static Future<AiDamageAssessment> assess({
@@ -321,10 +371,10 @@ class AiDamageService {
 
     try {
       final uri = Uri.parse(
-        'https://api.cloudinary.com/v1_1/${cloudinaryCloudName.trim()}/image/upload',
+        'https://api.cloudinary.com/v1_1/$activeCloudName/image/upload',
       );
       final request = http.MultipartRequest('POST', uri)
-        ..fields['upload_preset'] = cloudinaryUploadPreset.trim()
+        ..fields['upload_preset'] = activeCloudPreset
         ..fields['folder'] = 'road_rescue_damage'
         ..files.add(
           http.MultipartFile.fromBytes(
@@ -384,7 +434,7 @@ class AiDamageService {
       try {
         final uri = Uri.parse(
           'https://generativelanguage.googleapis.com/v1beta/models/'
-          '$model:generateContent?key=${geminiApiKey.trim()}',
+          '$model:generateContent?key=$activeGeminiKey',
         );
         final response = await http
             .post(
@@ -531,9 +581,9 @@ class AiDamageService {
   // ── Internals ─────────────────────────────────────────────────────────
 
   static List<String> get _modelsToTry {
-    final configured = geminiModel.trim().isEmpty
+    final configured = activeGeminiModel.isEmpty
         ? 'gemini-2.5-flash'
-        : geminiModel.trim();
+        : activeGeminiModel;
     // 2.0/1.5 are retired for new keys; keep only models that can actually
     // validate an image today, with the configured model first.
     return <String>{

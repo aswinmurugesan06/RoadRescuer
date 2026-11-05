@@ -95,3 +95,6 @@ Thumbs.db
 .buildlog/
 .atom/
 .svn/
+
+# Local AI credentials (never commit)
+mobile/assets/config/ai_config.json
